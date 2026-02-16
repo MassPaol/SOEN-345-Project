@@ -1,6 +1,4 @@
-package com.team_one.soen_345_project.model.util;
-
-import com.team_one.soen_345_project.viewmodel.register.RegisterInputValidator;
+package com.team_one.soen_345_project.viewmodel.register;
 
 import org.junit.Test;
 import java.util.Map;
