@@ -84,7 +84,6 @@ public class RegisterActivity extends AppCompatActivity {
 
     /**
      * Display validation errors from the ValidationResult.
-     * Sets error on TextInputLayout (not TextInputEditText) to respect errorIconDrawable settings.
      */
     private void showValidationErrors(Map<String, String> validationResult) {
         Map<String, com.google.android.material.textfield.TextInputLayout> fields = new HashMap<>();
