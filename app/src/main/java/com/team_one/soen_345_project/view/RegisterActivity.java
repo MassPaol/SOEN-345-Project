@@ -2,16 +2,21 @@ package com.team_one.soen_345_project.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputLayout;
 import com.team_one.soen_345_project.databinding.ActivityRegisterBinding;
-import com.team_one.soen_345_project.viewmodel.RegisterViewModel;
+import com.team_one.soen_345_project.viewmodel.register.RegisterViewModel;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
+    private static final String TAG = "RegisterActivity";
     private ActivityRegisterBinding binding;
 
     // ViewModel object for interaction with ViewModel layer
@@ -20,6 +25,7 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate: RegisterActivity started");
 
         // View Binding: Replaces findViewById to ensure type-safe access to layout views
         binding = ActivityRegisterBinding.inflate(getLayoutInflater());
@@ -34,25 +40,24 @@ public class RegisterActivity extends AppCompatActivity {
         // ----- UI Listeners -----
 
         binding.btnRegister.setOnClickListener(v -> {
-            // Business Logic: Collect data first, then hand it off to the ViewModel for processing
+            Log.i(TAG, "Starting validation + registration process for new user");
+
+            // Collect data first
             String[] registrationFields = fetchRegisterInputs();
 
-            // TODO: Validate inputs and add conditional logic, right now it only returns true
-            if (registerViewModel.registerValidation(registrationFields)) {
-                // Register user if validated
-                registerViewModel.registerUser(registrationFields);
-            } else {
-                // TODO: conditional logic
-            }
+            // Then send to ViewModel for processing (validation + registration)
+            registerViewModel.onRegisterClicked(registrationFields);
+
         });
     }
 
     /**
      * Data Extraction: Acts as a bridge between the XML UI components and the raw data
      * needed by the Repository layer.
+     * Array includes confirmPassword for validation purposes.
      */
     private String[] fetchRegisterInputs() {
-        String[] registrationFields = new String[5];
+        String[] registrationFields = new String[6]; // Changed to 6 to include confirmPassword
 
         // Fetch each field
         registrationFields[0] = binding.editFirstName.getText().toString();
@@ -60,8 +65,43 @@ public class RegisterActivity extends AppCompatActivity {
         registrationFields[2] = binding.editEmail.getText().toString();
         registrationFields[3] = binding.editPhone.getText().toString();
         registrationFields[4] = binding.editPassword.getText().toString();
+        registrationFields[5] = binding.editConfirmPassword.getText().toString();
 
         return registrationFields;
+    }
+
+    /**
+     * Clear all error messages from input fields
+     */
+    private void clearErrors() {
+        binding.layoutFirstName.setError(null);
+        binding.layoutLastName.setError(null);
+        binding.layoutEmail.setError(null);
+        binding.layoutPhone.setError(null);
+        binding.layoutPassword.setError(null);
+        binding.layoutConfirmPassword.setError(null);
+    }
+
+    /**
+     * Display validation errors from the ValidationResult.
+     * Sets error on TextInputLayout (not TextInputEditText) to respect errorIconDrawable settings.
+     */
+    private void showValidationErrors(Map<String, String> validationResult) {
+        Map<String, com.google.android.material.textfield.TextInputLayout> fields = new HashMap<>();
+        fields.put("firstName", binding.layoutFirstName);
+        fields.put("lastName", binding.layoutLastName);
+        fields.put("email", binding.layoutEmail);
+        fields.put("phone", binding.layoutPhone);
+        fields.put("password", binding.layoutPassword);
+        fields.put("confirmPassword", binding.layoutConfirmPassword);
+
+        for (Map.Entry<String, String> e : validationResult.entrySet()) {
+            TextInputLayout field = fields.get(e.getKey());
+            if (field != null) {
+                field.setError(e.getValue());
+                Log.e(TAG, "Validation error on " + e.getKey() + ": " + e.getValue());
+            }
+        }
     }
 
     /**
@@ -69,18 +109,31 @@ public class RegisterActivity extends AppCompatActivity {
      * asking for updates, allowing for a decoupled, event-driven UI.
      */
     private void setupObservers() {
-        // Watch for any errors on registration
-        registerViewModel.getErrorMessage().observe(this, error -> {
-            Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
-        });
 
         // Watch for the signal that tells the app to navigate to the main screen
         registerViewModel.getNavigateToMain().observe(this, navigateToMain -> {
             if (navigateToMain) {
+                Log.i(TAG, "Registration successful - navigating to MainActivity");
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.putExtra("REGISTER_SUCCESS", "Account successfully created!");
                 startActivity(intent);
                 finish();
+            }
+        });
+
+        registerViewModel.getUiState().observe(this, state -> {
+
+            clearErrors();
+
+            if (state.getValidationErrors() != null && !state.getValidationErrors().isEmpty()) {
+                Log.i(TAG, "Invalid registration input - showing validation errors");
+                showValidationErrors(state.getValidationErrors());
+                Toast.makeText(this, "Please fix the errors above", Toast.LENGTH_LONG).show();
+
+            }
+
+            if (state.getGeneralError() != null && !state.getGeneralError().isEmpty()) {
+                Toast.makeText(RegisterActivity.this, state.getGeneralError(), Toast.LENGTH_LONG).show();
             }
         });
     }

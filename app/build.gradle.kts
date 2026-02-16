@@ -7,9 +7,7 @@ plugins {
 
 android {
     namespace = "com.team_one.soen_345_project"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.team_one.soen_345_project"
