@@ -15,6 +15,7 @@ public class RegisterViewModel extends ViewModel {
     private static final String TAG = "RegisterViewModel";
     // Live data keeping track of state changes
     private final MutableLiveData<Boolean> navigateToMain = new MutableLiveData<>(false);
+
     private final MutableLiveData<RegisterUiState> _uiState =
             new MutableLiveData<>(new RegisterUiState(null,null));
 
@@ -55,7 +56,6 @@ public class RegisterViewModel extends ViewModel {
             }
         }));
     }
-
 
     // GETTERS AND SETTERS
 
