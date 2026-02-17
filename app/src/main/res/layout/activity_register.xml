@@ -123,15 +123,34 @@
             android:textSize="16sp"
             app:cornerRadius="8dp" />
 
-        <TextView
-            android:id="@+id/txtLoginLink"
+        <!-- Login Link -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Already have an account? Login"
-            android:textColor="@color/blue_grey"
-            android:layout_marginTop="16dp"
-            android:padding="8dp"
-            android:background="?attr/selectableItemBackground"/>
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/textViewLoginPrompt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Already have an account?"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <TextView
+                android:id="@+id/textViewLoginLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Login"
+                android:textSize="14sp"
+                android:textColor="?attr/colorPrimary"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

@@ -25,7 +25,7 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate: RegisterActivity started");
+        Log.d(TAG, "onCreate() called - RegisterActivity instance created");
 
         // View Binding: Replaces findViewById to ensure type-safe access to layout views
         binding = ActivityRegisterBinding.inflate(getLayoutInflater());
@@ -48,6 +48,11 @@ public class RegisterActivity extends AppCompatActivity {
             // Then send to ViewModel for processing (validation + registration)
             registerViewModel.onRegisterClicked(registrationFields);
 
+        });
+
+        binding.textViewLoginLink.setOnClickListener(v -> {
+            Log.i(TAG, "Navigating to LoginActivity from RegisterActivity");
+            finish(); // Just go back to LoginActivity instead of creating a new instance
         });
     }
 

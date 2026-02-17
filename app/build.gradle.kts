@@ -7,7 +7,9 @@ plugins {
 
 android {
     namespace = "com.team_one.soen_345_project"
-    compileSdk = 36
+    compileSdk {
+        version = release(36)
+    }
 
     defaultConfig {
         applicationId = "com.team_one.soen_345_project"
@@ -28,11 +30,9 @@ android {
             )
         }
     }
-
     buildFeatures {
         viewBinding = true
     }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
