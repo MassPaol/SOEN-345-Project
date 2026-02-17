@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.google.firebase.FirebaseNetworkException;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -55,6 +56,21 @@ public class FirebaseAuthRepository implements IAuthRepository {
                 });
     }
 
+    // implement the loginUser contract
+    @Override
+    public void loginUser(String email, String password, Callback callback) {
+        auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onResult("success", true);
+                    } else {
+                        Exception e = task.getException();
+                        String reason = getReason(e);
+                        callback.onResult(reason, false);
+                    }
+                });
+    }
+
     @NonNull
     private static String getReason(Exception e) {
         String reason;
@@ -64,9 +80,9 @@ public class FirebaseAuthRepository implements IAuthRepository {
             // Handle: Password too short
             reason = "Please use at least 6 characters.";
 
-        } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
-            // Handle: Bad email format
-            reason = "That email address is invalid.";
+        } else if (e instanceof FirebaseAuthInvalidCredentialsException || e instanceof FirebaseAuthInvalidUserException) {
+            //UPDATED:  Handle: Bad email format, wrong password, or user not found for additional security ( user attempting to log in should not know if its the email or password that are wrong)
+            reason = "Invalid email or password.";
 
         } else if (e instanceof FirebaseAuthUserCollisionException) {
             // Handle: Email already taken
