@@ -1,7 +1,9 @@
 package com.team_one.soen_345_project.di;
 
 import com.team_one.soen_345_project.model.repository.IAuthRepository;
+import com.team_one.soen_345_project.model.repository.IEventRepository;
 import com.team_one.soen_345_project.model.repository.impl.FirebaseAuthRepository;
+import com.team_one.soen_345_project.model.repository.impl.FirebaseEventRepository;
 
 /**
  * Service Locator / Dependency Provider.
@@ -15,5 +17,9 @@ public class Injection {
      */
     public static IAuthRepository provideAuthRepository() {
         return new FirebaseAuthRepository();
+    }
+
+    public static IEventRepository provideEventRepository() {
+        return new FirebaseEventRepository();
     }
 }

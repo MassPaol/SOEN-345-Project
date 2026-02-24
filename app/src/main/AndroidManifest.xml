@@ -33,6 +33,11 @@
             android:exported="false">
         </activity>
 
+        <activity
+            android:name=".view.AdminDashActivity"
+            android:exported="false">
+        </activity>
+
     </application>
 
 </manifest>
