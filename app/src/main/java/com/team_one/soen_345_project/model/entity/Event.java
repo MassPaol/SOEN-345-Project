@@ -44,7 +44,7 @@ public class Event {
     }
 
     // Date parser to turn two Strings i.e. "1771977600000" (Long date in ms) and "14:30" into a timestamp object
-    public Timestamp convertToTimestamp(String date, String time) {
+    private Timestamp convertToTimestamp(String date, String time) {
         long hours = Long.parseLong(time.substring(0, 2)) * 3600000;
         long minutes = Long.parseLong(time.substring(3)) * 60000;
         long dateLong = Long.parseLong(date);
