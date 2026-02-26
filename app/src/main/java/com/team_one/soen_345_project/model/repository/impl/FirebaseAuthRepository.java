@@ -1,7 +1,5 @@
 package com.team_one.soen_345_project.model.repository.impl;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 
 import com.google.firebase.FirebaseNetworkException;
@@ -14,7 +12,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.team_one.soen_345_project.model.entity.User;
 import com.team_one.soen_345_project.model.repository.IAuthRepository;
-import com.team_one.soen_345_project.model.util.Callback;
+import com.team_one.soen_345_project.model.util.callback.Callback;
 
 public class FirebaseAuthRepository implements IAuthRepository {
     // Get the auth singleton for db authentication

@@ -1,4 +1,4 @@
-package com.team_one.soen_345_project.model.util;
+package com.team_one.soen_345_project.model.util.callback;
 
 // Simple callback class for easier communication when using async methods
 public interface Callback {
