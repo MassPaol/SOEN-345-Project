@@ -9,11 +9,21 @@ import com.team_one.soen_345_project.model.util.Callback;
 import java.util.HashMap;
 
 public class FirebaseEventRepository implements IEventRepository {
-    // Get the auth singleton for db authentication
-    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseAuth auth;
+    FirebaseFirestore firestore;
 
-    // Get the firestore singleton for db interaction
-    FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+    public FirebaseEventRepository() {
+        // Get the auth singleton for db authentication
+        this.auth = FirebaseAuth.getInstance();
+        // Get the firestore singleton for db interaction
+        this.firestore = FirebaseFirestore.getInstance();
+    }
+
+    // Constructor for testing with mock objects
+    public FirebaseEventRepository(FirebaseAuth auth, FirebaseFirestore firestore) {
+        this.auth = auth;
+        this.firestore = firestore;
+    }
 
     // Save event to firestore
     public void saveEvent(HashMap<String, String> eventInfo, Callback callback) {
