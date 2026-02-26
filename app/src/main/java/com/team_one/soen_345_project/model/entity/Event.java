@@ -22,6 +22,11 @@ public class Event {
     private int capacity;
     private double price;
 
+    // No-argument constructor required by Firebase Firestore
+    public Event() {
+        // Firebase uses this to create instances
+    }
+
     public Event(String eventId, String title, String description, Timestamp date, String location, String category, int capacity, double price) {
         this.eventId = eventId;
         this.title = title;
@@ -58,6 +63,10 @@ public class Event {
 
     public String getEventId() {
         return eventId;
+    }
+
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
     }
 
     public String getTitle() {

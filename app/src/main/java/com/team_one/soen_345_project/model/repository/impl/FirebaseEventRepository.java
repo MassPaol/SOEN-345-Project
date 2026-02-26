@@ -2,12 +2,15 @@ package com.team_one.soen_345_project.model.repository.impl;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.model.repository.IEventRepository;
 import com.team_one.soen_345_project.model.util.callback.Callback;
-import com.team_one.soen_345_project.model.util.callback.EventCountCallback;
+import com.team_one.soen_345_project.model.util.callback.EventListCallback;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class FirebaseEventRepository implements IEventRepository {
     FirebaseAuth auth;
@@ -45,17 +48,42 @@ public class FirebaseEventRepository implements IEventRepository {
         });
     }
 
-    // Get the count of all events in the event collection
+
+    // Get all events from Firestore sorted by date (chronological order)
     @Override
-    public void getEventCount(EventCountCallback callback) {
+    public void getAllEvents(EventListCallback callback) {
+        android.util.Log.d("FirebaseEventRepo", "getAllEvents() called");
         firestore.collection("event")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    int count = querySnapshot.size();
-                    callback.onCountReceived(count);
+                    android.util.Log.d("FirebaseEventRepo", "Query successful, fetched " + querySnapshot.size() + " documents");
+                    List<Event> events = new ArrayList<>();
+
+                    for (QueryDocumentSnapshot document : querySnapshot) {
+                        try {
+                            Event event = document.toObject(Event.class);
+                            events.add(event);
+                            android.util.Log.d("FirebaseEventRepo", "Parsed event: " + event.getTitle());
+                        } catch (Exception e) {
+                            android.util.Log.e("FirebaseEventRepo", "Failed to parse event: " + document.getId(), e);
+                            // Skip invalid events
+                        }
+                    }
+
+                    // Sort events by date (chronological order - earliest first)
+                    events.sort((e1, e2) -> {
+                        if (e1.getDate() == null || e2.getDate() == null) {
+                            return 0;
+                        }
+                        return e1.getDate().compareTo(e2.getDate());
+                    });
+
+                    android.util.Log.d("FirebaseEventRepo", "Returning " + events.size() + " valid events");
+                    callback.onEventsReceived(events);
                 })
                 .addOnFailureListener(e -> {
-                    callback.onError("Failed to fetch event count: " + e.getMessage());
+                    android.util.Log.e("FirebaseEventRepo", "Failed to get all events", e);
+                    callback.onError("Failed to fetch events: " + e.getMessage());
                 });
     }
 }

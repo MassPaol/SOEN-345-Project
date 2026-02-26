@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.team_one.soen_345_project.databinding.ActivityAdmindashBinding;
 import com.team_one.soen_345_project.ui.CreateEventSheet;
@@ -17,6 +18,9 @@ public class AdminDashActivity extends AppCompatActivity {
 
     // ViewModel object for interaction with ViewModel layer
     private final AdminDashViewModel adminDashViewModel = new AdminDashViewModel();
+
+    // RecyclerView adapter for displaying events
+    private EventAdapter eventAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,11 +34,14 @@ public class AdminDashActivity extends AppCompatActivity {
         // UI/UX: Extends the layout into system status/navigation bars for a modern edge-to-edge look
         EdgeToEdge.enable(this);
 
+        // Setup RecyclerView
+        setupRecyclerView();
+
         // Initialize Observers to listen for UI state changes
         setupObservers();
 
-        // Load event count when activity starts
-        adminDashViewModel.loadEventCount();
+        // Load all events when activity starts (this also updates the count)
+        adminDashViewModel.loadAllEvents();
 
         // ----- UI Listeners -----
         binding.btnCreateEvent.setOnClickListener(v -> {
@@ -45,22 +52,41 @@ public class AdminDashActivity extends AppCompatActivity {
         });
     }
 
+    // Setup RecyclerView with adapter and layout manager
+    private void setupRecyclerView() {
+        eventAdapter = new EventAdapter();
+        binding.rvUpcomingEvents.setLayoutManager(new LinearLayoutManager(this));
+        binding.rvUpcomingEvents.setAdapter(eventAdapter);
+    }
+
     // Setup observers for LiveData from ViewModel
     private void setupObservers() {
         adminDashViewModel.getUiState().observe(this, uiState -> {
             if (uiState != null) {
+                Log.d(TAG, "UI State updated - Count: " + uiState.getEventCount() +
+                          ", Events: " + (uiState.getEvents() != null ? uiState.getEvents().size() : 0) +
+                          ", Message: " + uiState.getMessage());
+
                 // Update the event count TextView
                 binding.tvTotalEvents.setText(String.valueOf(uiState.getEventCount()));
+
+                // Update the RecyclerView with events list
+                if (uiState.getEvents() != null && !uiState.getEvents().isEmpty()) {
+                    eventAdapter.setEvents(uiState.getEvents());
+                    Log.d(TAG, "Loaded " + uiState.getEvents().size() + " events");
+                } else {
+                    Log.d(TAG, "No events to display");
+                }
 
                 // Handle action completion (e.g., event created successfully)
                 if (uiState.isActionComplete() && uiState.getMessage() != null) {
                     Toast.makeText(this, uiState.getMessage(), Toast.LENGTH_SHORT).show();
                 }
 
-                // Handle error messages
-                if (!uiState.isActionComplete() && uiState.getMessage() != null &&
-                    uiState.getMessage().contains("Failed")) {
-                    Toast.makeText(this, uiState.getMessage(), Toast.LENGTH_SHORT).show();
+                // Handle error messages - show all error messages
+                if (uiState.getMessage() != null && uiState.getMessage().contains("Failed")) {
+                    Log.e(TAG, "Error from ViewModel: " + uiState.getMessage());
+                    Toast.makeText(this, uiState.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
         });
