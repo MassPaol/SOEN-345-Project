@@ -1,6 +1,8 @@
 package com.team_one.soen_345_project.view;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -44,6 +46,28 @@ public class AdminDashActivity extends AppCompatActivity {
         adminDashViewModel.loadAllEvents();
 
         // ----- UI Listeners -----
+
+        // Search functionality
+        binding.etSearchEvents.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Not needed
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Filter events as user types
+                String query = s.toString();
+                Log.d(TAG, "Search query: " + query);
+                adminDashViewModel.searchEvents(query);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // Not needed
+            }
+        });
+
         binding.btnCreateEvent.setOnClickListener(v -> {
             Log.i(TAG, "Opening 'Create Event' Form");
 
