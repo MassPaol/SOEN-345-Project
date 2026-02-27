@@ -24,9 +24,13 @@ public class CreateEventSheet extends BottomSheetDialogFragment {
     // Calendar attributes
     private long selectedDate;
     private String selectedTime;
-    private final AdminDashViewModel adminDashViewModel = new AdminDashViewModel();
+    private AdminDashViewModel adminDashViewModel;
     private static final String TAG = "CreateEventSheet";
 
+    // Setter method to inject the ViewModel from the Activity
+    public void setViewModel(AdminDashViewModel viewModel) {
+        this.adminDashViewModel = viewModel;
+    }
 
     // Connect XMl to this class
     @Override
@@ -103,6 +107,12 @@ public class CreateEventSheet extends BottomSheetDialogFragment {
 
         // When the save event button is clicked get all info from the form and send it to ViewModel
         btnSaveEvent.setOnClickListener(v -> {
+            if (adminDashViewModel == null) {
+                Log.e(TAG, "ViewModel is null! Cannot save event.");
+                Toast.makeText(getContext(), "Error: ViewModel not initialized", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             // Collect data
             HashMap<String, String> eventFields = fetchEventInputs(view);
 
@@ -114,26 +124,28 @@ public class CreateEventSheet extends BottomSheetDialogFragment {
             adminDashViewModel.saveEvent(eventFields);
         });
 
-        adminDashViewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
-            if (state == null) return;
+        if (adminDashViewModel != null) {
+            adminDashViewModel.getUiState().observe(getViewLifecycleOwner(), state -> {
+                if (state == null) return;
 
-            // Show message (Toast)
-            if (state.getMessage() != null) {
-                if (state.isActionComplete()) {
-                    Log.i(TAG, "Successfully created a new event!");
+                // Show message (Toast)
+                if (state.getMessage() != null) {
+                    if (state.isActionComplete()) {
+                        Log.i(TAG, "Successfully created a new event!");
 
-                    Toast.makeText(getContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
-                } else {
-                    Log.e(TAG, "Failed to create a new event.");
+                        Toast.makeText(getContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e(TAG, "Failed to create a new event.");
 
-                    Toast.makeText(getContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), state.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
 
-            // Check if we should close the sheet
-            if (state.isActionComplete()) {
-                dismiss();
-            }
-        });
+                // Check if we should close the sheet
+                if (state.isActionComplete()) {
+                    dismiss();
+                }
+            });
+        }
     }
 }
