@@ -6,7 +6,9 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.model.repository.IEventRepository;
 import com.team_one.soen_345_project.model.util.callback.Callback;
+import com.team_one.soen_345_project.model.util.callback.DeleteEventCallback;
 import com.team_one.soen_345_project.model.util.callback.EventListCallback;
+import com.team_one.soen_345_project.model.util.callback.UpdateEventCallback;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -85,5 +87,43 @@ public class FirebaseEventRepository implements IEventRepository {
                     android.util.Log.e("FirebaseEventRepo", "Failed to get all events", e);
                     callback.onError("Failed to fetch events: " + e.getMessage());
                 });
+    }
+
+    @Override
+    public void deleteEvent(String eventId, DeleteEventCallback callback) {
+        String uid = auth.getCurrentUser().getUid();
+        // Backup check ensuring that user is an admin
+        firestore.collection("user").document(uid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && Boolean.TRUE.equals(documentSnapshot.getBoolean("isAdmin"))) {
+                        firestore.collection("event").document(eventId)
+                                .delete()
+                                .addOnSuccessListener(aVoid -> callback.onResult("Event deleted successfully", true))
+                                .addOnFailureListener(e -> callback.onResult("Failed to delete event: " + e.getMessage(), false));
+                    } else {
+                        callback.onResult("User does not exist or not an Admin", false);
+                    }
+                });
+
+    }
+
+    @Override
+    public void updateEvent(String eventId, HashMap<String, Object> updatedFields, UpdateEventCallback callback) {
+        String uid = auth.getCurrentUser().getUid();
+
+        // Backup check ensuring that user is an admin
+        firestore.collection("user").document(uid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && Boolean.TRUE.equals(documentSnapshot.getBoolean("isAdmin"))) {
+                        // Update the event document with the new fields
+                        firestore.collection("event").document(eventId)
+                                .update(updatedFields)
+                                .addOnSuccessListener(aVoid -> callback.onResult("Event updated successfully", true))
+                                .addOnFailureListener(e -> callback.onResult("Failed to update event: " + e.getMessage(), false));
+                    } else {
+                        callback.onResult("User does not exist or not an Admin", false);
+                    }
+                })
+                .addOnFailureListener(e -> callback.onResult("Failed to verify admin status: " + e.getMessage(), false));
     }
 }

@@ -8,29 +8,49 @@
     app:cardElevation="2dp"
     style="@style/Widget.Material3.CardView.Elevated">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Event Title -->
-        <TextView
-            android:id="@+id/tvEventTitle"
+        <!-- Three-dot menu button -->
+        <ImageButton
+            android:id="@+id/btnEventMenu"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/event_options_menu"
+            android:padding="12dp"
+            android:src="@drawable/ic_more_vert" />
+
+        <!-- Event content container -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Event Title"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="?attr/colorPrimary"
-            android:layout_marginBottom="8dp" />
+            android:layout_toStartOf="@id/btnEventMenu"
+            android:orientation="vertical">
+
+            <!-- Event Title -->
+            <TextView
+                android:id="@+id/tvEventTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Event Title"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"
+                android:layout_marginBottom="8dp"
+                android:paddingEnd="8dp" />
 
         <!-- Event Date and Time -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
+            android:layout_marginBottom="4dp"
+            android:paddingEnd="8dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -53,7 +73,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
+            android:layout_marginBottom="4dp"
+            android:paddingEnd="8dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -76,7 +97,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
+            android:layout_marginBottom="4dp"
+            android:paddingEnd="8dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -99,7 +121,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="12dp"
+            android:paddingEnd="8dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -124,7 +147,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:paddingEnd="8dp">
 
             <TextView
                 android:id="@+id/tvEventCapacity"
@@ -144,6 +168,8 @@
                 android:textStyle="bold"
                 android:textColor="?attr/colorPrimary" />
         </LinearLayout>
-    </LinearLayout>
+
+        </LinearLayout>
+    </RelativeLayout>
 </com.google.android.material.card.MaterialCardView>
 

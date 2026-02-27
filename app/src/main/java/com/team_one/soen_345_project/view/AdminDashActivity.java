@@ -11,7 +11,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.team_one.soen_345_project.databinding.ActivityAdmindashBinding;
+import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.ui.CreateEventSheet;
+import com.team_one.soen_345_project.ui.EditEventSheet;
 import com.team_one.soen_345_project.viewmodel.admindash.AdminDashViewModel;
 
 public class AdminDashActivity extends AppCompatActivity {
@@ -79,8 +81,15 @@ public class AdminDashActivity extends AppCompatActivity {
     // Setup RecyclerView with adapter and layout manager
     private void setupRecyclerView() {
         eventAdapter = new EventAdapter();
+        eventAdapter.setViewModel(adminDashViewModel); // Pass ViewModel to adapter
         binding.rvUpcomingEvents.setLayoutManager(new LinearLayoutManager(this));
         binding.rvUpcomingEvents.setAdapter(eventAdapter);
+
+        // Set up edit event listener
+        eventAdapter.setOnEditEventListener(event -> {
+            Log.i(TAG, "Edit event clicked: " + event.getTitle());
+            openEditEventSheet(event);
+        });
     }
 
     // Setup observers for LiveData from ViewModel
@@ -105,6 +114,8 @@ public class AdminDashActivity extends AppCompatActivity {
                 // Handle action completion (e.g., event created successfully)
                 if (uiState.isActionComplete() && uiState.getMessage() != null) {
                     Toast.makeText(this, uiState.getMessage(), Toast.LENGTH_SHORT).show();
+                    // Clear the action state after showing the message to prevent re-showing
+                    adminDashViewModel.clearActionState();
                 }
 
                 // Handle error messages - show all error messages
@@ -123,6 +134,16 @@ public class AdminDashActivity extends AppCompatActivity {
         bottomSheet.setViewModel(adminDashViewModel);
         // 'getSupportFragmentManager' is the manager that handles fragment transactions
         bottomSheet.show(getSupportFragmentManager(), "CreateEventTag");
+    }
+
+    // Edit event sheet slide up form
+    public void openEditEventSheet(Event event) {
+        EditEventSheet bottomSheet = new EditEventSheet();
+        // Pass the ViewModel instance and the event to be edited
+        bottomSheet.setViewModel(adminDashViewModel);
+        bottomSheet.setEvent(event);
+        // Show the edit sheet
+        bottomSheet.show(getSupportFragmentManager(), "EditEventTag");
     }
 
 }

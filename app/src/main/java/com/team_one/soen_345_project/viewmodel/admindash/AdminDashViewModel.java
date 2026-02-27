@@ -102,6 +102,44 @@ public class AdminDashViewModel {
         _uiState.postValue(new AdminDashUiState(message, isActionComplete, totalCount, filteredEvents));
     }
 
+    public void deleteEvent(String eventId) {
+        iEventRepository.deleteEvent(eventId, (message, isSuccess) -> {
+            if (isSuccess) {
+                _uiState.postValue(new AdminDashUiState(message, true));
+                // Reload events list after successfully deleting an event
+                loadAllEvents();
+            } else {
+                _uiState.postValue(new AdminDashUiState(message, false));
+            }
+        });
+    }
+
+    public void updateEvent(String eventId, HashMap<String, Object> updatedFields) {
+        iEventRepository.updateEvent(eventId, updatedFields, (message, isSuccess) -> {
+            if (isSuccess) {
+                _uiState.postValue(new AdminDashUiState(message, true));
+                // Reload events list after successfully updating an event
+                loadAllEvents();
+            } else {
+                _uiState.postValue(new AdminDashUiState(message, false));
+            }
+        });
+    }
+
+    // Clear the action complete state after message has been shown
+    public void clearActionState() {
+        AdminDashUiState currentState = _uiState.getValue();
+        if (currentState != null) {
+            // Preserve count and events, but clear the message and action complete flag
+            _uiState.postValue(new AdminDashUiState(
+                    null,
+                    false,
+                    currentState.getEventCount(),
+                    currentState.getEvents()
+            ));
+        }
+    }
+
     public LiveData<AdminDashUiState> getUiState() {
         return _uiState;
     }

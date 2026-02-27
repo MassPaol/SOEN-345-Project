@@ -7,6 +7,7 @@ import com.google.firebase.firestore.DocumentId;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -50,13 +51,25 @@ public class Event {
 
     // Date parser to turn two Strings i.e. "1771977600000" (Long date in ms) and "14:30" into a timestamp object
     private Timestamp convertToTimestamp(String date, String time) {
-        long hours = Long.parseLong(time.substring(0, 2)) * 3600000;
-        long minutes = Long.parseLong(time.substring(3)) * 60000;
+        int hour = Integer.parseInt(time.substring(0, 2));
+        int minute = Integer.parseInt(time.substring(3));
         long dateLong = Long.parseLong(date);
 
-        long dateInMs = dateLong + hours + minutes;
+        // MaterialDatePicker returns UTC midnight for selected date
+        // Extract year/month/day using UTC calendar to get correct date
+        Calendar utcCalendar = Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"));
+        utcCalendar.setTimeInMillis(dateLong);
 
-        return new Timestamp(new Date(dateInMs));
+        int year = utcCalendar.get(Calendar.YEAR);
+        int month = utcCalendar.get(Calendar.MONTH);
+        int day = utcCalendar.get(Calendar.DAY_OF_MONTH);
+
+        // Create a new calendar in local timezone with the selected date and time
+        Calendar localCalendar = Calendar.getInstance();
+        localCalendar.set(year, month, day, hour, minute, 0);
+        localCalendar.set(Calendar.MILLISECOND, 0);
+
+        return new Timestamp(localCalendar.getTime());
     }
 
     // GETTERS AND SETTERS
