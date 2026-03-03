@@ -72,7 +72,7 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(this, "Login Successful!", Toast.LENGTH_SHORT).show();
 
                 // Check if they are an admin, redirect accordingly
-                Class<?> destination = state.isAdmin() ? AdminDashActivity.class : MainActivity.class;
+                Class<?> destination = state.isAdmin() ? AdminDashActivity.class : UserDashActivity.class;
 
                 Intent intent = new Intent(this, destination);
                 startActivity(intent);
