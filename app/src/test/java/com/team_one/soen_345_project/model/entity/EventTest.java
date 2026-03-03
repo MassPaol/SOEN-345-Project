@@ -8,8 +8,10 @@ import com.google.firebase.Timestamp;
 
 import org.junit.Test;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 public class EventTest {
 
@@ -77,9 +79,19 @@ public class EventTest {
         Event event = new Event(eventInfo);
 
         // Assert
-        // 10 hours = 10 * 3600000 ms = 36000000 ms
-        // Expected timestamp = 1740441600000 + 36000000 = 1740477600000
-        long expectedTimeMs = 1740441600000L + (10 * 3600000L);
+        // The Event constructor extracts year/month/day in UTC from the date millis,
+        // then creates a local-timezone Calendar with those date components + the given time.
+        // We must replicate that logic to get the expected value.
+        Calendar utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        utcCal.setTimeInMillis(1740441600000L);
+        int year = utcCal.get(Calendar.YEAR);
+        int month = utcCal.get(Calendar.MONTH);
+        int day = utcCal.get(Calendar.DAY_OF_MONTH);
+
+        Calendar localCal = Calendar.getInstance();
+        localCal.set(year, month, day, 10, 0, 0);
+        localCal.set(Calendar.MILLISECOND, 0);
+        long expectedTimeMs = localCal.getTimeInMillis();
         assertEquals(expectedTimeMs, event.getDate().toDate().getTime());
     }
 
