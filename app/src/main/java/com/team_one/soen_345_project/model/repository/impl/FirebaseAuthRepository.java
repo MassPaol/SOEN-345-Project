@@ -8,10 +8,11 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.team_one.soen_345_project.model.entity.User;
 import com.team_one.soen_345_project.model.repository.IAuthRepository;
-import com.team_one.soen_345_project.model.util.Callback;
+import com.team_one.soen_345_project.model.util.callback.Callback;
 
 public class FirebaseAuthRepository implements IAuthRepository {
     // Get the auth singleton for db authentication
@@ -62,11 +63,16 @@ public class FirebaseAuthRepository implements IAuthRepository {
         auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        callback.onResult("success", true);
+                        FirebaseUser user = auth.getCurrentUser();
+                        if (user != null) {
+                            checkIfAdmin(user.getUid(), callback);
+                        } else {
+                            callback.onResult("success", true, false);
+                        }
                     } else {
                         Exception e = task.getException();
                         String reason = getReason(e);
-                        callback.onResult(reason, false);
+                        callback.onResult(reason, false, false);
                     }
                 });
     }
@@ -97,5 +103,20 @@ public class FirebaseAuthRepository implements IAuthRepository {
             reason = "An error occurred. Please try again.";
         }
         return reason;
+    }
+
+    // Utility method for on login checking if a user is an admin or not
+    private void checkIfAdmin(String uid, Callback callback) {
+        firestore.collection("user")
+                .document(uid)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    boolean isAdmin = Boolean.TRUE.equals(doc.getBoolean("isAdmin"));
+                    callback.onResult("success", true, isAdmin);
+                })
+                .addOnFailureListener(e -> {
+                    // Still logged in, just couldn't verify admin status
+                    callback.onResult("success", true, false);
+                });
     }
 }

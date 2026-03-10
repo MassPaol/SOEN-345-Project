@@ -7,6 +7,7 @@ public class User {
     private String email;
     private String phoneNumber;
     private String password;
+    private boolean isAdmin;
 
     public User(String uid, String firstName, String lastName,
                 String email, String phoneNumber, String password) {
@@ -16,6 +17,7 @@ public class User {
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.password = password;
+        this.isAdmin = false;
     }
 
 
@@ -67,5 +69,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
     }
 }

@@ -39,13 +39,13 @@ public class RegisterViewModel extends ViewModel {
     // Send user registration info to Model for registering with firebase
     private void registerUser(String[] registrationFields) {
 
-        Log.d(TAG, "Attempting to create new user in firebasestore: " + registrationFields[2]);
+        Log.d(TAG, "Attempting to create new user in firestore: " + registrationFields[2]);
         // Strip out confirmPassword (index 5) before sending to repository
         // Repository expects: [firstName, lastName, email, phone, password]
         String[] fieldsForRepository = new String[5];
         System.arraycopy(registrationFields, 0, fieldsForRepository, 0, 5);
 
-        iAuthRepository.createUser(fieldsForRepository, ((message, isSuccess) -> {
+        iAuthRepository.createUser(fieldsForRepository, ((message, isSuccess, isAdmin) -> {
             if(isSuccess) {
                 // Change screen on success
                 Log.d(TAG, "Creation successful for user: " + registrationFields[2]);
