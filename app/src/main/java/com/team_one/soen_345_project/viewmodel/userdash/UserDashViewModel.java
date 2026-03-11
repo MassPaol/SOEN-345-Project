@@ -7,6 +7,7 @@ import com.team_one.soen_345_project.di.Injection;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.model.repository.IEventRepository;
 import com.team_one.soen_345_project.model.util.callback.EventListCallback;
+import com.team_one.soen_345_project.model.util.filter.FilterState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +80,19 @@ public class UserDashViewModel {
                     .totalEventCount(totalCount)
                     .events(filteredEvents)
                     .build());
+    }
+
+    // Method to apply the filter to the selected list of events
+    public void applyFilter(FilterState filterState) {
+        UserDashUiState currentState = _uiState.getValue();
+        String message = currentState != null ? currentState.getMessage() : null;
+        boolean isActionComplete = currentState != null && currentState.isActionComplete();
+
+        _uiState.postValue(new UserDashUiState.Builder(message, isActionComplete)
+                .totalEventCount(allEvents.size())
+                .events(new ArrayList<>(allEvents)) // no filtering logic yet
+                .filterState(filterState)           // just stores the state
+                .build());
     }
 }
 
