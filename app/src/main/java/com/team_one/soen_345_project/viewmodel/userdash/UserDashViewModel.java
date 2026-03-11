@@ -15,7 +15,7 @@ public class UserDashViewModel {
     private static final String TAG = "UserDashViewModel";
 
     private final MutableLiveData<UserDashUiState> _uiState =
-            new MutableLiveData<>(new UserDashUiState(null, false));
+            new MutableLiveData<>(new UserDashUiState.Builder(null, false).build());
 
     private final IEventRepository iEventRepository = Injection.provideEventRepository();
 
@@ -35,13 +35,16 @@ public class UserDashViewModel {
                 android.util.Log.d(TAG, "onEventsReceived: " + events.size() + " events");
                 allEvents = new ArrayList<>(events);
                 int totalCount = events.size();
-                _uiState.postValue(new UserDashUiState(null, false, totalCount, events));
+                _uiState.postValue(new UserDashUiState.Builder(null, false)
+                        .totalEventCount(totalCount)
+                        .events(events)
+                        .build());
             }
 
             @Override
             public void onError(String errorMessage) {
                 android.util.Log.e(TAG, "loadAllEvents error: " + errorMessage);
-                _uiState.postValue(new UserDashUiState(errorMessage, false, 0));
+                _uiState.postValue(new UserDashUiState.Builder(errorMessage, false).build());
             }
         });
     }
@@ -72,7 +75,10 @@ public class UserDashViewModel {
         boolean isActionComplete = currentState != null && currentState.isActionComplete();
         int totalCount = allEvents.size();
 
-        _uiState.postValue(new UserDashUiState(message, isActionComplete, totalCount, filteredEvents));
+        _uiState.postValue(new UserDashUiState.Builder(message, isActionComplete)
+                    .totalEventCount(totalCount)
+                    .events(filteredEvents)
+                    .build());
     }
 }
 
