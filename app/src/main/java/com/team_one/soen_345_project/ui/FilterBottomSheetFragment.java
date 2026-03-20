@@ -24,6 +24,7 @@ import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -100,7 +101,7 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         CategoryFilterOption[] categories = CategoryFilterOption.values();
         String[] categoryNames = new String[categories.length];
         for (int i = 0; i < categories.length; i++) {
-            categoryNames[i] = categories[i].toString();
+            categoryNames[i] = categories[i].getLabel();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -115,7 +116,7 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         LocationFilterOption[] locations = LocationFilterOption.values();
         String[] locationNames = new String[locations.length];
         for (int i = 0; i < locations.length; i++) {
-            locationNames[i] = locations[i].toString();
+            locationNames[i] = locations[i].getLabel();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -184,21 +185,21 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
 
         // Category enum selection logic
         String cat = actvCategory.getText().toString();
-        CategoryFilterOption catEnum;
-        if (cat.isEmpty()) {
-            catEnum = CategoryFilterOption.ALL;
-        } else {
-            catEnum = CategoryFilterOption.valueOf(cat);
-        }
+        CategoryFilterOption catEnum = cat.isEmpty()
+                ? CategoryFilterOption.ALL
+                : Arrays.stream(CategoryFilterOption.values())
+                .filter(c -> c.getLabel().equals(cat))
+                .findFirst()
+                .orElse(CategoryFilterOption.ALL);
 
         // Location enum selection logic
         String loc = actvLocation.getText().toString();
-        LocationFilterOption locEnum;
-        if (loc.isEmpty()) {
-            locEnum = LocationFilterOption.ALL;
-        } else {
-            locEnum = LocationFilterOption.valueOf(loc);
-        }
+        LocationFilterOption locEnum = loc.isEmpty()
+                ? LocationFilterOption.ALL
+                : Arrays.stream(LocationFilterOption.values())
+                .filter(l -> l.getLabel().equals(loc))
+                .findFirst()
+                .orElse(LocationFilterOption.ALL);
 
         // Populate state based on current UI.
         state.setCategory(catEnum);

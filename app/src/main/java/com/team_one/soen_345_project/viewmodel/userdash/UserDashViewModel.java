@@ -105,8 +105,8 @@ public class UserDashViewModel {
     public List<Event> filterEvents(FilterState filterState) {
         return allEvents.stream()
                 .filter(event ->
-                        (filterState.getCategory().equals(CategoryFilterOption.ALL) || event.getCategory().equalsIgnoreCase(filterState.getCategory().getLabel())) &&
-                        (filterState.getLocation().equals(LocationFilterOption.ALL) || event.getLocation().equalsIgnoreCase(filterState.getLocation().toString())) &&
+                        (filterState.getCategory().equals(CategoryFilterOption.ALL) || event.getCategory_id().equalsIgnoreCase(filterState.getCategory().getId())) &&
+                        (filterState.getLocation().equals(LocationFilterOption.ALL)  || event.getLocation_id().equalsIgnoreCase(filterState.getLocation().getId())) &&
                         (filterState.getDateFrom() == null || event.getDate().compareTo(filterState.getDateFrom()) >= 0) &&
                         (filterState.getDateTo() == null || event.getDate().compareTo(filterState.getDateTo()) <= 0) &&
                         (!filterState.isAvailableOnly() || !event.isFull()) &&
