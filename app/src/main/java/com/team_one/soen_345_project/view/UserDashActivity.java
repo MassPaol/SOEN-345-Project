@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.team_one.soen_345_project.databinding.ActivityUserdashBinding;
 import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
+import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
 import com.team_one.soen_345_project.viewmodel.userdash.UserDashViewModel;
 
 import java.util.ArrayList;
@@ -69,13 +70,7 @@ public class UserDashActivity extends AppCompatActivity {
         });
 
         binding.btnFilter.setOnClickListener(v -> {
-            // Extract distinct locations from current allEvents for the dropdown
-            List<LocationFilterOption> locations = new ArrayList<>();
-            // populated next commit when allEvents is accessible here
-            // for now passes empty list — dropdown will be empty but functional
-
             FilterBottomSheetFragment sheet = FilterBottomSheetFragment.newInstance(
-                    locations,
                     filterState -> {
                         Log.d(TAG, "Filter applied: " + filterState.getCategory().getLabel());
                         userDashViewModel.applyFilter(filterState);
@@ -116,7 +111,7 @@ public class UserDashActivity extends AppCompatActivity {
             }
         });
 
-        // Placeholder observer — logs applied filter state until logic is implemented
+        // Logs applied filter state
         userDashViewModel.getUiState().observe(this, uiState -> {
             if (uiState == null || uiState.getFilterState() == null) return;
             Log.d(TAG, "Active filter - " +

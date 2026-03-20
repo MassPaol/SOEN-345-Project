@@ -13,7 +13,7 @@ public class FilterState {
 
     public FilterState() {
         this.category = CategoryFilterOption.ALL;
-        this.location = null;
+        this.location = LocationFilterOption.ALL;
         this.dateFrom = null;
         this.dateTo = null;
         this.availableOnly = false;
@@ -29,8 +29,8 @@ public class FilterState {
                 ", dateFrom=" + (dateFrom != null ? dateFrom.toDate().toString() : "Any") +
                 ", dateTo=" + (dateTo != null ? dateTo.toDate().toString() : "Any") +
                 ", availableOnly=" + availableOnly +
-                ", minPrice=" + (minPrice != null ? minPrice : "Any") +
-                ", maxPrice=" + (maxPrice != null ? maxPrice : "Any") +
+                ", minPrice=" + (minPrice != 0.0 ? minPrice : "$0.00") +
+                ", maxPrice=" + (maxPrice != 1000.0 ? maxPrice : "$1000.0") +
                 '}';
     }
 

@@ -1,16 +1,22 @@
 package com.team_one.soen_345_project.viewmodel.userdash;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.firebase.Timestamp;
 import com.team_one.soen_345_project.di.Injection;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.model.repository.IEventRepository;
 import com.team_one.soen_345_project.model.util.callback.EventListCallback;
+import com.team_one.soen_345_project.model.util.filter.CategoryFilterOption;
 import com.team_one.soen_345_project.model.util.filter.FilterState;
+import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserDashViewModel {
     private static final String TAG = "UserDashViewModel";
@@ -90,9 +96,23 @@ public class UserDashViewModel {
 
         _uiState.postValue(new UserDashUiState.Builder(message, isActionComplete)
                 .totalEventCount(allEvents.size())
-                .events(new ArrayList<>(allEvents)) // no filtering logic yet
-                .filterState(filterState)           // just stores the state
+                .filterState(filterState)
+                .events(filterEvents(filterState))
                 .build());
     }
-}
 
+    // Filter all current events based on a given filter
+    public List<Event> filterEvents(FilterState filterState) {
+        return allEvents.stream()
+                .filter(event ->
+                        (filterState.getCategory().equals(CategoryFilterOption.ALL) || event.getCategory().equalsIgnoreCase(filterState.getCategory().getLabel())) &&
+                        (filterState.getLocation().equals(LocationFilterOption.ALL) || event.getLocation().equalsIgnoreCase(filterState.getLocation().toString())) &&
+                        (filterState.getDateFrom() == null || event.getDate().compareTo(filterState.getDateFrom()) >= 0) &&
+                        (filterState.getDateTo() == null || event.getDate().compareTo(filterState.getDateTo()) <= 0) &&
+                        (!filterState.isAvailableOnly() || !event.isFull()) &&
+                        (filterState.getMinPrice() == null || event.getPrice() >= filterState.getMinPrice()) &&
+                        (filterState.getMaxPrice() == null || event.getPrice() <= filterState.getMaxPrice())
+                )
+                .collect(Collectors.toList());
+    }
+}

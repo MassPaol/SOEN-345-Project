@@ -1,4 +1,4 @@
-package com.team_one.soen_345_project.view;
+package com.team_one.soen_345_project.ui;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -23,10 +23,8 @@ import com.team_one.soen_345_project.model.util.filter.FilterState;
 import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -38,7 +36,6 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         void onFilterApplied(FilterState filterState);
     }
 
-    private List<LocationFilterOption> locationList;
     private OnFilterAppliedListener listener;
 
     // UI Elements
@@ -62,12 +59,10 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
      * Static factory method
      */
     public static FilterBottomSheetFragment newInstance(
-            List<LocationFilterOption> locations,
             OnFilterAppliedListener listener) {
 
         FilterBottomSheetFragment fragment = new FilterBottomSheetFragment();
         // Storing directly in fields.
-        fragment.locationList = locations;
         fragment.listener = listener;
         return fragment;
     }
@@ -117,11 +112,10 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
     }
 
     private void setupLocationDropdown() {
-        if (locationList == null) return;
-
-        List<String> locationNames = new ArrayList<>();
-        for (LocationFilterOption loc : locationList) {
-            locationNames.add(loc.toString()); // toString() yields the display name
+        LocationFilterOption[] locations = LocationFilterOption.values();
+        String[] locationNames = new String[locations.length];
+        for (int i = 0; i < locations.length; i++) {
+            locationNames[i] = locations[i].toString();
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -197,9 +191,18 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
             catEnum = CategoryFilterOption.valueOf(cat);
         }
 
+        // Location enum selection logic
+        String loc = actvLocation.getText().toString();
+        LocationFilterOption locEnum;
+        if (loc.isEmpty()) {
+            locEnum = LocationFilterOption.ALL;
+        } else {
+            locEnum = LocationFilterOption.valueOf(loc);
+        }
+
         // Populate state based on current UI.
         state.setCategory(catEnum);
-        state.setLocation(new LocationFilterOption(actvLocation.getText().toString()));
+        state.setLocation(locEnum);
         state.setDateFrom(selectedStartDate);
         state.setDateTo(selectedEndDate);
         state.setAvailableOnly(cbAvailableSpots.isChecked());

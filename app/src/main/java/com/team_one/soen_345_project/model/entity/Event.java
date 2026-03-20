@@ -22,13 +22,15 @@ public class Event {
     private String category;
     private int capacity;
     private double price;
+    private int reservations;
 
     // No-argument constructor required by Firebase Firestore
     public Event() {
         // Firebase uses this to create instances
     }
 
-    public Event(String eventId, String title, String description, Timestamp date, String location, String category, int capacity, double price) {
+    public Event(String eventId, String title, String description, Timestamp date, String location,
+                 String category, int capacity, double price, int reservations) {
         this.eventId = eventId;
         this.title = title;
         this.description = description;
@@ -37,6 +39,7 @@ public class Event {
         this.category = category;
         this.capacity = capacity;
         this.price = price;
+        this.reservations= reservations;
     }
 
     public Event(HashMap<String, String> eventInfo) {
@@ -47,6 +50,7 @@ public class Event {
         this.category = eventInfo.get("category");
         this.capacity = Integer.parseInt(eventInfo.get("capacity"));
         this.price = Double.parseDouble(eventInfo.get("price"));
+        this.reservations = 0;
     }
 
     // Date parser to turn two Strings i.e. "1771977600000" (Long date in ms) and "14:30" into a timestamp object
@@ -137,4 +141,10 @@ public class Event {
     public void setPrice(double price) {
         this.price = price;
     }
+
+    public int getReservations() { return this.reservations; }
+
+    public void setReservations(int reservations) { this.reservations = reservations; }
+
+    public boolean isFull() { return this.reservations >= this.capacity; }
 }
