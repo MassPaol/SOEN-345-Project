@@ -27,7 +27,7 @@ public class EventTest {
         int capacity = 500;
         double price = 99.99;
 
-        Event event = new Event(eventId, title, description, date, location, category, capacity, price);
+        Event event = new Event(eventId, title, description, date, location, category, capacity, price, 0, "", "");
 
         assertEquals(eventId, event.getEventId());
         assertEquals(title, event.getTitle());
@@ -167,14 +167,14 @@ public class EventTest {
 
     @Test
     public void constructor_withZeroCapacity_setsCapacityToZero() {
-        Event event = new Event("id", "Title", "Desc", new Timestamp(new Date()), "Loc", "Cat", 0, 50.0);
+        Event event = new Event("id", "Title", "Desc", new Timestamp(new Date()), "Loc", "Cat", 0, 50.0, 0, "", "");
 
         assertEquals(0, event.getCapacity());
     }
 
     @Test
     public void constructor_withZeroPrice_setsPriceToZero() {
-        Event event = new Event("id", "Title", "Desc", new Timestamp(new Date()), "Loc", "Cat", 100, 0.0);
+        Event event = new Event("id", "Title", "Desc", new Timestamp(new Date()), "Loc", "Cat", 100, 0.0, 0, "", "");
 
         assertEquals(0.0, event.getPrice(), 0.01);
     }
@@ -199,14 +199,14 @@ public class EventTest {
 
     @Test
     public void constructor_withNullEventId_setsEventIdToNull() {
-        Event event = new Event(null, "Title", "Desc", new Timestamp(new Date()), "Loc", "Cat", 100, 50.0);
+        Event event = new Event(null, "Title", "Desc", new Timestamp(new Date()), "Loc", "Cat", 100, 50.0, 0, "", "");
 
         assertNull(event.getEventId());
     }
 
     @Test
     public void constructor_withEmptyStrings_storesEmptyStrings() {
-        Event event = new Event("", "", "", new Timestamp(new Date()), "", "", 0, 0.0);
+        Event event = new Event("", "", "", new Timestamp(new Date()), "", "", 0, 0.0, 0, "", "");
 
         assertEquals("", event.getEventId());
         assertEquals("", event.getTitle());
@@ -217,7 +217,7 @@ public class EventTest {
 
     @Test
     public void constructor_withAllNullValues_setsFieldsToNull() {
-        Event event = new Event(null, null, null, null, null, null, 0, 0.0);
+        Event event = new Event(null, null, null, null, null, null, 0, 0.0, 0, null, null);
 
         assertNull(event.getEventId());
         assertNull(event.getTitle());
@@ -236,7 +236,10 @@ public class EventTest {
                 "Default Location",
                 "Default Category",
                 100,
-                50.0
+                50.0,
+                0,
+                "",
+                ""
         );
     }
 }

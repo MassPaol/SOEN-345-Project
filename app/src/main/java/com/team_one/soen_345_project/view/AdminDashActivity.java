@@ -14,6 +14,7 @@ import com.team_one.soen_345_project.databinding.ActivityAdmindashBinding;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.ui.CreateEventSheet;
 import com.team_one.soen_345_project.ui.EditEventSheet;
+import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
 import com.team_one.soen_345_project.viewmodel.admindash.AdminDashViewModel;
 
 public class AdminDashActivity extends AppCompatActivity {
@@ -76,6 +77,16 @@ public class AdminDashActivity extends AppCompatActivity {
             // Event Add popup
             openEventSheet();
         });
+
+        binding.btnFilter.setOnClickListener(v -> {
+            FilterBottomSheetFragment sheet = FilterBottomSheetFragment.newInstance(
+                    filterState -> {
+                        Log.d(TAG, "Filter applied: " + filterState.getCategory().getLabel());
+                        adminDashViewModel.applyFilter(filterState);
+                    }
+            );
+            sheet.show(getSupportFragmentManager(), "FilterBottomSheet");
+        });
     }
 
     // Setup RecyclerView with adapter and layout manager
@@ -108,6 +119,7 @@ public class AdminDashActivity extends AppCompatActivity {
                     eventAdapter.setEvents(uiState.getEvents());
                     Log.d(TAG, "Loaded " + uiState.getEvents().size() + " events");
                 } else {
+                    eventAdapter.setEvents(uiState.getEvents());
                     Log.d(TAG, "No events to display");
                 }
 

@@ -1,20 +1,15 @@
 package com.team_one.soen_345_project.model.repository.impl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.team_one.soen_345_project.model.entity.Event;
+import com.team_one.soen_345_project.model.repository.IAuthRepository;
+import com.team_one.soen_345_project.model.repository.IEventRepository;
+import com.team_one.soen_345_project.model.repository.IFirestoreSource;
 import com.team_one.soen_345_project.model.util.callback.Callback;
 
 import org.junit.Before;
@@ -30,40 +25,23 @@ import java.util.HashMap;
 @RunWith(MockitoJUnitRunner.class)
 public class FirebaseEventRepositoryTest {
 
+    // All plain interfaces — Mockito handles these with zero bytecode issues
     @Mock
-    private FirebaseAuth mockAuth;
+    private IAuthRepository mockAuthRepository;
 
     @Mock
-    private FirebaseFirestore mockFirestore;
-
-    @Mock
-    private FirebaseUser mockUser;
-
-    @Mock
-    private CollectionReference mockUserCollection;
-
-    @Mock
-    private CollectionReference mockEventCollection;
-
-    @Mock
-    private DocumentReference mockUserDocument;
-
-    @Mock
-    private DocumentSnapshot mockDocumentSnapshot;
-
-    @Mock
-    private Task<DocumentSnapshot> mockTask;
+    private IFirestoreSource mockFirestoreSource;
 
     @Mock
     private Callback mockCallback;
 
-    private FirebaseEventRepository repository;
+    private IEventRepository mockRepository;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         // Use constructor injection with mocked dependencies
-        repository = new FirebaseEventRepository(mockAuth, mockFirestore);
+        mockRepository = new FirebaseEventRepository(mockAuthRepository, mockFirestoreSource);
     }
 
     @Test
@@ -72,39 +50,29 @@ public class FirebaseEventRepositoryTest {
         String adminUid = "admin123";
         HashMap<String, String> eventInfo = createTestEventInfo();
 
-        // Mock Firebase Auth
-        when(mockAuth.getCurrentUser()).thenReturn(mockUser);
-        when(mockUser.getUid()).thenReturn(adminUid);
+        // Mock auth — user is logged in
+        when(mockAuthRepository.getCurrentUserUid()).thenReturn(adminUid);
 
-        // Mock Firestore user collection
-        when(mockFirestore.collection("user")).thenReturn(mockUserCollection);
-        when(mockUserCollection.document(adminUid)).thenReturn(mockUserDocument);
-        when(mockUserDocument.get()).thenReturn(mockTask);
-
-        // Mock document snapshot - user exists and is admin
-        when(mockDocumentSnapshot.exists()).thenReturn(true);
-        when(mockDocumentSnapshot.getBoolean("isAdmin")).thenReturn(true);
-
-        // Mock Firestore event collection
-        when(mockFirestore.collection("event")).thenReturn(mockEventCollection);
-        when(mockEventCollection.add(any(Event.class))).thenReturn(mock(Task.class));
-
-        // Capture the OnSuccessListener
-        ArgumentCaptor<OnSuccessListener<DocumentSnapshot>> captor =
-            ArgumentCaptor.forClass(OnSuccessListener.class);
+        // Capture the OnSuccessListener for isUserAdmin
+        ArgumentCaptor<OnSuccessListener<Boolean>> captor =
+                ArgumentCaptor.forClass(OnSuccessListener.class);
 
         // Act
-        repository.saveEvent(eventInfo, mockCallback);
+        mockRepository.saveEvent(eventInfo, mockCallback);
 
-        // Verify get() was called and capture the listener
-        verify(mockUserDocument).get();
-        verify(mockTask).addOnSuccessListener(captor.capture());
+        // Verify isUserAdmin() was called and capture the listener
+        verify(mockFirestoreSource).isUserAdmin(eq(adminUid), captor.capture(), any());
 
-        // Simulate successful document retrieval
-        captor.getValue().onSuccess(mockDocumentSnapshot);
+        // Simulate: user exists and is admin
+        captor.getValue().onSuccess(true);
+
+        // Capture and fire the addEvent success callback
+        ArgumentCaptor<OnSuccessListener<Void>> addCaptor =
+                ArgumentCaptor.forClass(OnSuccessListener.class);
+        verify(mockFirestoreSource).addEvent(any(), addCaptor.capture(), any());
+        addCaptor.getValue().onSuccess(null);
 
         // Assert
-        verify(mockEventCollection).add(any(Event.class));
         verify(mockCallback).onResult("Event added successfully", true);
     }
 
@@ -114,35 +82,24 @@ public class FirebaseEventRepositoryTest {
         String nonAdminUid = "user456";
         HashMap<String, String> eventInfo = createTestEventInfo();
 
-        // Mock Firebase Auth
-        when(mockAuth.getCurrentUser()).thenReturn(mockUser);
-        when(mockUser.getUid()).thenReturn(nonAdminUid);
-
-        // Mock Firestore user collection
-        when(mockFirestore.collection("user")).thenReturn(mockUserCollection);
-        when(mockUserCollection.document(nonAdminUid)).thenReturn(mockUserDocument);
-        when(mockUserDocument.get()).thenReturn(mockTask);
-
-        // Mock document snapshot - user exists but is NOT admin
-        when(mockDocumentSnapshot.exists()).thenReturn(true);
-        when(mockDocumentSnapshot.getBoolean("isAdmin")).thenReturn(false);
+        // Mock auth — user is logged in
+        when(mockAuthRepository.getCurrentUserUid()).thenReturn(nonAdminUid);
 
         // Capture the OnSuccessListener
-        ArgumentCaptor<OnSuccessListener<DocumentSnapshot>> captor =
-            ArgumentCaptor.forClass(OnSuccessListener.class);
+        ArgumentCaptor<OnSuccessListener<Boolean>> captor =
+                ArgumentCaptor.forClass(OnSuccessListener.class);
 
         // Act
-        repository.saveEvent(eventInfo, mockCallback);
+        mockRepository.saveEvent(eventInfo, mockCallback);
 
-        // Verify get() was called and capture the listener
-        verify(mockUserDocument).get();
-        verify(mockTask).addOnSuccessListener(captor.capture());
+        // Verify isUserAdmin() was called and capture the listener
+        verify(mockFirestoreSource).isUserAdmin(eq(nonAdminUid), captor.capture(), any());
 
-        // Simulate successful document retrieval
-        captor.getValue().onSuccess(mockDocumentSnapshot);
+        // Simulate: user exists but is NOT admin
+        captor.getValue().onSuccess(false);
 
         // Assert
-        verify(mockEventCollection, never()).add(any(Event.class));
+        verify(mockFirestoreSource, never()).addEvent(any(), any(), any());
         verify(mockCallback).onResult("User does not exist or not an Admin", false);
     }
 
@@ -152,34 +109,24 @@ public class FirebaseEventRepositoryTest {
         String uid = "nonexistent789";
         HashMap<String, String> eventInfo = createTestEventInfo();
 
-        // Mock Firebase Auth
-        when(mockAuth.getCurrentUser()).thenReturn(mockUser);
-        when(mockUser.getUid()).thenReturn(uid);
-
-        // Mock Firestore user collection
-        when(mockFirestore.collection("user")).thenReturn(mockUserCollection);
-        when(mockUserCollection.document(uid)).thenReturn(mockUserDocument);
-        when(mockUserDocument.get()).thenReturn(mockTask);
-
-        // Mock document snapshot - user does NOT exist
-        when(mockDocumentSnapshot.exists()).thenReturn(false);
+        // Mock auth — user is logged in
+        when(mockAuthRepository.getCurrentUserUid()).thenReturn(uid);
 
         // Capture the OnSuccessListener
-        ArgumentCaptor<OnSuccessListener<DocumentSnapshot>> captor =
-            ArgumentCaptor.forClass(OnSuccessListener.class);
+        ArgumentCaptor<OnSuccessListener<Boolean>> captor =
+                ArgumentCaptor.forClass(OnSuccessListener.class);
 
         // Act
-        repository.saveEvent(eventInfo, mockCallback);
+        mockRepository.saveEvent(eventInfo, mockCallback);
 
-        // Verify get() was called and capture the listener
-        verify(mockUserDocument).get();
-        verify(mockTask).addOnSuccessListener(captor.capture());
+        // Verify isUserAdmin() was called and capture the listener
+        verify(mockFirestoreSource).isUserAdmin(eq(uid), captor.capture(), any());
 
-        // Simulate successful document retrieval
-        captor.getValue().onSuccess(mockDocumentSnapshot);
+        // Simulate: user does NOT exist (FirestoreSource returns false)
+        captor.getValue().onSuccess(false);
 
         // Assert
-        verify(mockEventCollection, never()).add(any(Event.class));
+        verify(mockFirestoreSource, never()).addEvent(any(), any(), any());
         verify(mockCallback).onResult("User does not exist or not an Admin", false);
     }
 
@@ -189,35 +136,24 @@ public class FirebaseEventRepositoryTest {
         String uid = "admin999";
         HashMap<String, String> eventInfo = createTestEventInfo();
 
-        // Mock Firebase Auth
-        when(mockAuth.getCurrentUser()).thenReturn(mockUser);
-        when(mockUser.getUid()).thenReturn(uid);
-
-        // Mock Firestore user collection
-        when(mockFirestore.collection("user")).thenReturn(mockUserCollection);
-        when(mockUserCollection.document(uid)).thenReturn(mockUserDocument);
-        when(mockUserDocument.get()).thenReturn(mockTask);
-
-        // Mock document snapshot - user exists but isAdmin is null
-        when(mockDocumentSnapshot.exists()).thenReturn(true);
-        when(mockDocumentSnapshot.getBoolean("isAdmin")).thenReturn(null);
+        // Mock auth — user is logged in
+        when(mockAuthRepository.getCurrentUserUid()).thenReturn(uid);
 
         // Capture the OnSuccessListener
-        ArgumentCaptor<OnSuccessListener<DocumentSnapshot>> captor =
-            ArgumentCaptor.forClass(OnSuccessListener.class);
+        ArgumentCaptor<OnSuccessListener<Boolean>> captor =
+                ArgumentCaptor.forClass(OnSuccessListener.class);
 
         // Act
-        repository.saveEvent(eventInfo, mockCallback);
+        mockRepository.saveEvent(eventInfo, mockCallback);
 
-        // Verify get() was called and capture the listener
-        verify(mockUserDocument).get();
-        verify(mockTask).addOnSuccessListener(captor.capture());
+        // Verify isUserAdmin() was called and capture the listener
+        verify(mockFirestoreSource).isUserAdmin(eq(uid), captor.capture(), any());
 
-        // Simulate successful document retrieval
-        captor.getValue().onSuccess(mockDocumentSnapshot);
+        // Simulate: user exists but isAdmin is null (FirestoreSource treats null as false)
+        captor.getValue().onSuccess(false);
 
         // Assert
-        verify(mockEventCollection, never()).add(any(Event.class));
+        verify(mockFirestoreSource, never()).addEvent(any(), any(), any());
         verify(mockCallback).onResult("User does not exist or not an Admin", false);
     }
 
@@ -227,22 +163,14 @@ public class FirebaseEventRepositoryTest {
         String uid = "specific-uid-123";
         HashMap<String, String> eventInfo = createTestEventInfo();
 
-        // Mock Firebase Auth
-        when(mockAuth.getCurrentUser()).thenReturn(mockUser);
-        when(mockUser.getUid()).thenReturn(uid);
-
-        // Mock Firestore user collection
-        when(mockFirestore.collection("user")).thenReturn(mockUserCollection);
-        when(mockUserCollection.document(uid)).thenReturn(mockUserDocument);
-        when(mockUserDocument.get()).thenReturn(mockTask);
+        // Mock auth — user is logged in
+        when(mockAuthRepository.getCurrentUserUid()).thenReturn(uid);
 
         // Act
-        repository.saveEvent(eventInfo, mockCallback);
+        mockRepository.saveEvent(eventInfo, mockCallback);
 
-        // Assert
-        verify(mockFirestore).collection("user");
-        verify(mockUserCollection).document(uid);
-        verify(mockUserDocument).get();
+        // Assert — verifies isUserAdmin is called with the correct uid
+        verify(mockFirestoreSource).isUserAdmin(eq(uid), any(), any());
     }
 
     @Test
@@ -251,35 +179,22 @@ public class FirebaseEventRepositoryTest {
         String adminUid = "admin789";
         HashMap<String, String> eventInfo = createTestEventInfo();
 
-        // Mock Firebase Auth
-        when(mockAuth.getCurrentUser()).thenReturn(mockUser);
-        when(mockUser.getUid()).thenReturn(adminUid);
-
-        // Mock Firestore user collection
-        when(mockFirestore.collection("user")).thenReturn(mockUserCollection);
-        when(mockUserCollection.document(adminUid)).thenReturn(mockUserDocument);
-        when(mockUserDocument.get()).thenReturn(mockTask);
-
-        // Mock document snapshot - user is admin
-        when(mockDocumentSnapshot.exists()).thenReturn(true);
-        when(mockDocumentSnapshot.getBoolean("isAdmin")).thenReturn(true);
-
-        // Mock Firestore event collection
-        when(mockFirestore.collection("event")).thenReturn(mockEventCollection);
-        when(mockEventCollection.add(any(Event.class))).thenReturn(mock(Task.class));
+        // Mock auth — user is logged in
+        when(mockAuthRepository.getCurrentUserUid()).thenReturn(adminUid);
 
         // Capture the OnSuccessListener
-        ArgumentCaptor<OnSuccessListener<DocumentSnapshot>> captor =
-            ArgumentCaptor.forClass(OnSuccessListener.class);
+        ArgumentCaptor<OnSuccessListener<Boolean>> captor =
+                ArgumentCaptor.forClass(OnSuccessListener.class);
 
         // Act
-        repository.saveEvent(eventInfo, mockCallback);
-        verify(mockTask).addOnSuccessListener(captor.capture());
-        captor.getValue().onSuccess(mockDocumentSnapshot);
+        mockRepository.saveEvent(eventInfo, mockCallback);
+        verify(mockFirestoreSource).isUserAdmin(eq(adminUid), captor.capture(), any());
 
-        // Assert
-        verify(mockFirestore).collection("event");
-        verify(mockEventCollection).add(any(Event.class));
+        // Simulate: user is admin
+        captor.getValue().onSuccess(true);
+
+        // Assert — verifies addEvent is called on the firestoreSource (i.e., targets "event" collection internally)
+        verify(mockFirestoreSource).addEvent(any(), any(), any());
     }
 
     @Test
@@ -288,40 +203,25 @@ public class FirebaseEventRepositoryTest {
         String adminUid = "admin111";
         HashMap<String, String> eventInfo = createTestEventInfo();
 
-        // Mock Firebase Auth
-        when(mockAuth.getCurrentUser()).thenReturn(mockUser);
-        when(mockUser.getUid()).thenReturn(adminUid);
+        // Mock auth — user is logged in
+        when(mockAuthRepository.getCurrentUserUid()).thenReturn(adminUid);
 
-        // Mock Firestore user collection
-        when(mockFirestore.collection("user")).thenReturn(mockUserCollection);
-        when(mockUserCollection.document(adminUid)).thenReturn(mockUserDocument);
-        when(mockUserDocument.get()).thenReturn(mockTask);
-
-        // Mock document snapshot - user is admin
-        when(mockDocumentSnapshot.exists()).thenReturn(true);
-        when(mockDocumentSnapshot.getBoolean("isAdmin")).thenReturn(true);
-
-        // Mock Firestore event collection
-        when(mockFirestore.collection("event")).thenReturn(mockEventCollection);
-        when(mockEventCollection.add(any(Event.class))).thenReturn(mock(Task.class));
-
-        // Capture the OnSuccessListener and Event
-        ArgumentCaptor<OnSuccessListener<DocumentSnapshot>> listenerCaptor =
-            ArgumentCaptor.forClass(OnSuccessListener.class);
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        // Capture the OnSuccessListener and event data
+        ArgumentCaptor<OnSuccessListener<Boolean>> listenerCaptor =
+                ArgumentCaptor.forClass(OnSuccessListener.class);
+        ArgumentCaptor<HashMap> eventCaptor = ArgumentCaptor.forClass(HashMap.class);
 
         // Act
-        repository.saveEvent(eventInfo, mockCallback);
-        verify(mockTask).addOnSuccessListener(listenerCaptor.capture());
-        listenerCaptor.getValue().onSuccess(mockDocumentSnapshot);
+        mockRepository.saveEvent(eventInfo, mockCallback);
+        verify(mockFirestoreSource).isUserAdmin(eq(adminUid), listenerCaptor.capture(), any());
+
+        // Simulate: user is admin
+        listenerCaptor.getValue().onSuccess(true);
 
         // Assert
-        verify(mockEventCollection).add(eventCaptor.capture());
-        Event capturedEvent = eventCaptor.getValue();
+        verify(mockFirestoreSource).addEvent(eventCaptor.capture(), any(), any());
 
-
-
-        // Verify the Event was created (we can't access private fields, but we verified it was created)
+        // Verify the event data was created (the HashMap passed through contains the original eventInfo fields)
         // The Event constructor validates the HashMap internally
     }
 

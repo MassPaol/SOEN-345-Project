@@ -5,6 +5,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -16,8 +18,11 @@ import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.team_one.soen_345_project.R;
+import com.team_one.soen_345_project.model.util.filter.CategoryFilterOption;
+import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 import com.team_one.soen_345_project.viewmodel.admindash.AdminDashViewModel;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class CreateEventSheet extends BottomSheetDialogFragment {
@@ -51,17 +56,30 @@ public class CreateEventSheet extends BottomSheetDialogFragment {
 
         EditText eventTitleInput = view.findViewById(R.id.et_title);
         EditText eventDiscInput = view.findViewById(R.id.et_description);
-        EditText eventLocationInput = view.findViewById(R.id.et_location);
+        AutoCompleteTextView eventLocationInput = view.findViewById(R.id.et_location);
         EditText eventCapacityInput = view.findViewById(R.id.et_capacity);
         EditText eventPriceInput = view.findViewById(R.id.et_price);
-        EditText eventCategoryInput = view.findViewById(R.id.et_category);
+        AutoCompleteTextView eventCategoryInput = view.findViewById(R.id.et_category);
+
+        // Look up enums by their display label
+        LocationFilterOption locationEnum = Arrays.stream(LocationFilterOption.values())
+                .filter(l -> l.getLabel().equals(eventLocationInput.getText().toString()))
+                .findFirst()
+                .orElse(LocationFilterOption.ALL);
+
+        CategoryFilterOption categoryEnum = Arrays.stream(CategoryFilterOption.values())
+                .filter(c -> c.getLabel().equals(eventCategoryInput.getText().toString()))
+                .findFirst()
+                .orElse(CategoryFilterOption.ALL);
 
         eventFields.put("title", eventTitleInput.getText().toString());
         eventFields.put("disc", eventDiscInput.getText().toString());
-        eventFields.put("location", eventLocationInput.getText().toString());
+        eventFields.put("location", locationEnum.getLabel());   // display name stored in Firebase
+        eventFields.put("location_id", locationEnum.getId());   // id for filtering
+        eventFields.put("category", categoryEnum.getLabel());   // display name stored in Firebase
+        eventFields.put("category_id", categoryEnum.getId());   // id for filtering
         eventFields.put("capacity", eventCapacityInput.getText().toString());
         eventFields.put("price", eventPriceInput.getText().toString());
-        eventFields.put("category", eventCategoryInput.getText().toString());
 
         return eventFields;
     }
@@ -104,6 +122,24 @@ public class CreateEventSheet extends BottomSheetDialogFragment {
                 });
             });
         });
+
+        // Setup location dropdown
+        AutoCompleteTextView locationDropdown = view.findViewById(R.id.et_location);
+        String[] locationLabels = Arrays.stream(LocationFilterOption.values())
+                .filter(l -> l != LocationFilterOption.ALL) // exclude "All Locations"
+                .map(LocationFilterOption::getLabel)
+                .toArray(String[]::new);
+        locationDropdown.setAdapter(new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_dropdown_item_1line, locationLabels));
+
+        // Setup category dropdown
+        AutoCompleteTextView categoryDropdown = view.findViewById(R.id.et_category);
+        String[] categoryLabels = Arrays.stream(CategoryFilterOption.values())
+                .filter(c -> c != CategoryFilterOption.ALL) // exclude "All Categories"
+                .map(CategoryFilterOption::getLabel)
+                .toArray(String[]::new);
+        categoryDropdown.setAdapter(new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_dropdown_item_1line, categoryLabels));
 
         // When the save event button is clicked get all info from the form and send it to ViewModel
         btnSaveEvent.setOnClickListener(v -> {
