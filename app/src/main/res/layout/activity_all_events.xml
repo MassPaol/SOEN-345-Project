@@ -34,6 +34,16 @@
             android:textColor="?attr/colorPrimary"
             android:layout_marginStart="8dp" />
 
+        <!-- Filter button -->
+        <ImageButton
+            android:id="@+id/btnFilter"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/outline_filter_list_24"
+            android:contentDescription="Filter"
+            android:padding="8dp" />
+
     </LinearLayout>
 
     <!-- Search bar -->

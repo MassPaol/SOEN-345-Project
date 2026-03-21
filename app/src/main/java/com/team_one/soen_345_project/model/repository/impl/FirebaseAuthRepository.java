@@ -119,4 +119,10 @@ public class FirebaseAuthRepository implements IAuthRepository {
                     callback.onResult("success", true, false);
                 });
     }
+
+    @Override
+    public String getCurrentUserUid() {
+        FirebaseUser user = auth.getCurrentUser();
+        return user != null ? user.getUid() : null;
+    }
 }

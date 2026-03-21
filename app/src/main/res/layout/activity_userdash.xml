@@ -85,20 +85,37 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:hint="Search Events..."
-            app:startIconDrawable="@android:drawable/ic_menu_search">
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etSearchEvents"
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_weight="1"
+                android:hint="Search Events..."
+                app:startIconDrawable="@android:drawable/ic_menu_search">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSearchEvents"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFilter"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="50dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                app:icon="@drawable/outline_filter_list_24" />
+
+        </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSeeAllEvents"

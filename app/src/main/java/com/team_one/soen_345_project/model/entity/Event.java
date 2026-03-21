@@ -1,16 +1,11 @@
 package com.team_one.soen_345_project.model.entity;
 
-import android.util.Log;
-
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
+import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 
 public class Event {
     @DocumentId // AutoID by Firestore
@@ -19,16 +14,21 @@ public class Event {
     private String description;
     private Timestamp date;
     private String location;
+    private String location_id;
     private String category;
+    private String category_id;
     private int capacity;
     private double price;
+    private int reservations;
 
     // No-argument constructor required by Firebase Firestore
     public Event() {
         // Firebase uses this to create instances
     }
 
-    public Event(String eventId, String title, String description, Timestamp date, String location, String category, int capacity, double price) {
+    public Event(String eventId, String title, String description, Timestamp date, String location,
+                 String category, int capacity, double price, int reservations, String category_id,
+                 String location_id) {
         this.eventId = eventId;
         this.title = title;
         this.description = description;
@@ -37,6 +37,9 @@ public class Event {
         this.category = category;
         this.capacity = capacity;
         this.price = price;
+        this.reservations= reservations;
+        this.category_id = category_id;
+        this.location_id = location_id;
     }
 
     public Event(HashMap<String, String> eventInfo) {
@@ -44,9 +47,12 @@ public class Event {
         this.description = eventInfo.get("disc");
         this.date = convertToTimestamp(eventInfo.get("date"), eventInfo.get("time"));
         this.location = eventInfo.get("location");
+        this.location_id = eventInfo.get("location_id");
         this.category = eventInfo.get("category");
+        this.category_id = eventInfo.get("category_id");
         this.capacity = Integer.parseInt(eventInfo.get("capacity"));
         this.price = Double.parseDouble(eventInfo.get("price"));
+        this.reservations = 0;
     }
 
     // Date parser to turn two Strings i.e. "1771977600000" (Long date in ms) and "14:30" into a timestamp object
@@ -136,5 +142,27 @@ public class Event {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public int getReservations() { return this.reservations; }
+
+    public void setReservations(int reservations) { this.reservations = reservations; }
+
+    public boolean isFull() { return this.reservations >= this.capacity; }
+
+    public String getLocation_id() {
+        return location_id;
+    }
+
+    public void setLocation_id(String location_id) {
+        this.location_id = location_id;
+    }
+
+    public String getCategory_id() {
+        return category_id;
+    }
+
+    public void setCategory_id(String category_id) {
+        this.category_id = category_id;
     }
 }

@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.team_one.soen_345_project.databinding.ActivityAllEventsBinding;
+import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
 import com.team_one.soen_345_project.viewmodel.userdash.UserDashViewModel;
 
 public class AllEventsActivity extends AppCompatActivity {
@@ -53,6 +54,16 @@ public class AllEventsActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) { }
+        });
+
+        binding.btnFilter.setOnClickListener(v -> {
+            FilterBottomSheetFragment sheet = FilterBottomSheetFragment.newInstance(
+                    filterState -> {
+                        Log.d(TAG, "Filter applied: " + filterState.getCategory().getLabel());
+                        userDashViewModel.applyFilter(filterState);
+                    }
+            );
+            sheet.show(getSupportFragmentManager(), "FilterBottomSheet");
         });
     }
 
