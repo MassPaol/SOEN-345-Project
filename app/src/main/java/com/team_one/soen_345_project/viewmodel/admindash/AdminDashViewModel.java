@@ -20,8 +20,17 @@ public class AdminDashViewModel {
     private final MutableLiveData<AdminDashUiState> _uiState =
             new MutableLiveData<>(new AdminDashUiState.Builder(null, false).build());
 
-    IEventRepository iEventRepository = Injection.provideEventRepository();
+    IEventRepository iEventRepository;
     private List<Event> allEvents = new ArrayList<>();
+
+    // Parametrized constructor for testing use
+    public AdminDashViewModel(IEventRepository repository) {
+        this.iEventRepository = repository;
+    }
+    // Keep the no-arg constructor for production use
+    public AdminDashViewModel() {
+        this.iEventRepository = Injection.provideEventRepository();
+    }
 
     public void saveEvent(HashMap<String, String> eventInfo) {
         iEventRepository.saveEvent(eventInfo, (message, isSuccess, isAdmin) -> {

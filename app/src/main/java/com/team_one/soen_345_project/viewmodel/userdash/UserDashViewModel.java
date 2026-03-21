@@ -24,13 +24,22 @@ public class UserDashViewModel {
     private final MutableLiveData<UserDashUiState> _uiState =
             new MutableLiveData<>(new UserDashUiState.Builder(null, false).build());
 
-    private final IEventRepository iEventRepository = Injection.provideEventRepository();
+    private final IEventRepository iEventRepository;
 
     // Cache of all events for filtering
     private List<Event> allEvents = new ArrayList<>();
 
     public LiveData<UserDashUiState> getUiState() {
         return _uiState;
+    }
+
+    // Parametrized constructor for testing use
+    public UserDashViewModel(IEventRepository repository) {
+        this.iEventRepository = repository;
+    }
+    // Keep the no-arg constructor for production use
+    public UserDashViewModel() {
+        this.iEventRepository = Injection.provideEventRepository();
     }
 
     // Load all available events from Firebase
