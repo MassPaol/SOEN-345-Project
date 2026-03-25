@@ -11,15 +11,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.team_one.soen_345_project.databinding.ActivityAllEventsBinding;
-import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
-import com.team_one.soen_345_project.viewmodel.userdash.UserDashViewModel;
+import com.team_one.soen_345_project.di.Injection;
+import com.team_one.soen_345_project.model.repository.IReservationRepository;
+import com.team_one.soen_345_project.ui.FilterReserveEventSheet;
+import com.team_one.soen_345_project.viewmodel.allevents.AllEventsViewModel;
 
 public class AllEventsActivity extends AppCompatActivity {
     private static final String TAG = "AllEventsActivity";
 
     private ActivityAllEventsBinding binding;
-    private final UserDashViewModel userDashViewModel = new UserDashViewModel();
+    private final AllEventsViewModel allEventsViewModel = new AllEventsViewModel();
     private UserEventAdapter userEventAdapter;
+    private final IReservationRepository reservationRepository = Injection.provideReservationRepository();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +38,10 @@ public class AllEventsActivity extends AppCompatActivity {
         setupObservers();
 
         // Load all events from Firebase
-        userDashViewModel.loadAllEvents();
+        allEventsViewModel.loadAllEvents();
+
+        // Load booked events early (may complete before events load)
+        loadBookedEvents();
 
         // Back button returns to User Dashboard
         binding.btnBack.setOnClickListener(v -> finish());
@@ -49,7 +55,7 @@ public class AllEventsActivity extends AppCompatActivity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String query = s.toString();
                 Log.d(TAG, "Search query: " + query);
-                userDashViewModel.searchEvents(query);
+                allEventsViewModel.searchEvents(query);
             }
 
             @Override
@@ -57,24 +63,55 @@ public class AllEventsActivity extends AppCompatActivity {
         });
 
         binding.btnFilter.setOnClickListener(v -> {
-            FilterBottomSheetFragment sheet = FilterBottomSheetFragment.newInstance(
+            FilterReserveEventSheet sheet = FilterReserveEventSheet.newInstance(
                     filterState -> {
                         Log.d(TAG, "Filter applied: " + filterState.getCategory().getLabel());
-                        userDashViewModel.applyFilter(filterState);
+                        allEventsViewModel.applyFilter(filterState);
                     }
             );
             sheet.show(getSupportFragmentManager(), "FilterBottomSheet");
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh bookings when coming back (e.g., after booking in another screen)
+        loadBookedEvents();
+    }
+
     private void setupRecyclerView() {
         userEventAdapter = new UserEventAdapter();
         binding.rvAllEvents.setLayoutManager(new LinearLayoutManager(this));
         binding.rvAllEvents.setAdapter(userEventAdapter);
+
+        userEventAdapter.setOnItemClickListener(event -> {
+            if (event == null || event.getEventId() == null) return;
+
+            ReserveEventSheet bottomSheet = ReserveEventSheet.newInstance(event.getEventId());
+            bottomSheet.setEventProvider(eventId -> {
+                if (allEventsViewModel.getUiState().getValue() == null || allEventsViewModel.getUiState().getValue().getEvents() == null) {
+                    return null;
+                }
+                for (com.team_one.soen_345_project.model.entity.Event e : allEventsViewModel.getUiState().getValue().getEvents()) {
+                    if (e != null && eventId.equals(e.getEventId())) {
+                        return e;
+                    }
+                }
+                return null;
+            });
+            bottomSheet.setOnBookingSuccessListener(bookedEventId -> {
+                // Refresh booked badge state immediately
+                loadBookedEvents();
+                // Optional: also refresh events list so capacity/reservations reflect new booking
+                allEventsViewModel.loadAllEvents();
+            });
+            bottomSheet.show(getSupportFragmentManager(), "EventDetailsBottomSheetFragment");
+        });
     }
 
     private void setupObservers() {
-        userDashViewModel.getUiState().observe(this, uiState -> {
+        allEventsViewModel.getUiState().observe(this, uiState -> {
             if (uiState == null) return;
 
             Log.d(TAG, "UI State updated - Events: " +
@@ -87,6 +124,8 @@ public class AllEventsActivity extends AppCompatActivity {
             // Populate the RecyclerView
             if (uiState.getEvents() != null) {
                 userEventAdapter.setEvents(uiState.getEvents());
+                // Re-apply current bookings after list updates
+                loadBookedEvents();
             }
 
             // Show error messages
@@ -97,10 +136,24 @@ public class AllEventsActivity extends AppCompatActivity {
         });
     }
 
+    private void loadBookedEvents() {
+        reservationRepository.getBookedEventIdsForCurrentUser(new com.team_one.soen_345_project.model.util.callback.BookedEventsCallback() {
+            @Override
+            public void onResult(java.util.Set<String> bookedEventIds) {
+                userEventAdapter.setBookedEventIds(bookedEventIds);
+            }
+
+            @Override
+            public void onError(String message) {
+                // Silent fail: we just won't show badges.
+                android.util.Log.e(TAG, "Failed to load bookings: " + message);
+            }
+        });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         binding = null;
     }
 }
-

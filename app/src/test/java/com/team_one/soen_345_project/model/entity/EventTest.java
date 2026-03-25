@@ -44,11 +44,13 @@ public class EventTest {
     public void constructor_withHashMap_parsesFieldsCorrectly() {
         HashMap<String, String> eventInfo = new HashMap<>();
         eventInfo.put("title", "Music Festival");
-        eventInfo.put("disc", "Summer music event");
+        eventInfo.put("description", "Summer music event");
         eventInfo.put("date", "1740441600000"); // Date in milliseconds
         eventInfo.put("time", "14:30"); // Time as HH:mm
         eventInfo.put("location", "Central Park");
+        eventInfo.put("location_id", "cp");
         eventInfo.put("category", "Music");
+        eventInfo.put("category_id", "music");
         eventInfo.put("capacity", "1000");
         eventInfo.put("price", "75.50");
 
@@ -61,6 +63,9 @@ public class EventTest {
         assertEquals("Music", event.getCategory());
         assertEquals(1000, event.getCapacity());
         assertEquals(75.50, event.getPrice(), 0.01);
+        assertEquals(0, event.getReservations());
+        assertEquals("cp", event.getLocation_id());
+        assertEquals("music", event.getCategory_id());
     }
 
     // Test constructor with HashMap - verify timestamp conversion
@@ -68,11 +73,13 @@ public class EventTest {
     public void constructor_withHashMap_convertsDateAndTimeToTimestamp() {
         HashMap<String, String> eventInfo = new HashMap<>();
         eventInfo.put("title", "Event");
-        eventInfo.put("disc", "Description");
+        eventInfo.put("description", "Description");
         eventInfo.put("date", "1740441600000"); // Base date
         eventInfo.put("time", "10:00"); // 10 hours
         eventInfo.put("location", "Location");
+        eventInfo.put("location_id", "loc");
         eventInfo.put("category", "Category");
+        eventInfo.put("category_id", "cat");
         eventInfo.put("capacity", "100");
         eventInfo.put("price", "0");
 

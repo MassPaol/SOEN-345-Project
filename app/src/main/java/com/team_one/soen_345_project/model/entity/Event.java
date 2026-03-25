@@ -2,10 +2,10 @@ package com.team_one.soen_345_project.model.entity;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
-import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Event {
     @DocumentId // AutoID by Firestore
@@ -43,15 +43,41 @@ public class Event {
     }
 
     public Event(HashMap<String, String> eventInfo) {
+        this((Map<String, String>) eventInfo);
+    }
+
+    /**
+     * Convenience constructor used by some UI flows/tests where event fields come from a map.
+     * Supports both the current key "description" and legacy key "disc".
+     */
+    public Event(Map<String, String> eventInfo) {
+        if (eventInfo == null) return;
+
         this.title = eventInfo.get("title");
-        this.description = eventInfo.get("disc");
-        this.date = convertToTimestamp(eventInfo.get("date"), eventInfo.get("time"));
+
+        String desc = eventInfo.get("description");
+        if (desc == null) {
+            desc = eventInfo.get("disc");
+        }
+        this.description = desc;
+
+        String dateStr = eventInfo.get("date");
+        String timeStr = eventInfo.get("time");
+        if (dateStr != null && timeStr != null) {
+            this.date = convertToTimestamp(dateStr, timeStr);
+        }
+
         this.location = eventInfo.get("location");
         this.location_id = eventInfo.get("location_id");
         this.category = eventInfo.get("category");
         this.category_id = eventInfo.get("category_id");
-        this.capacity = Integer.parseInt(eventInfo.get("capacity"));
-        this.price = Double.parseDouble(eventInfo.get("price"));
+
+        String cap = eventInfo.get("capacity");
+        this.capacity = cap != null ? Integer.parseInt(cap) : 0;
+
+        String priceStr = eventInfo.get("price");
+        this.price = priceStr != null ? Double.parseDouble(priceStr) : 0.0;
+
         this.reservations = 0;
     }
 

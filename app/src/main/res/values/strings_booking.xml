@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="status_booked">Booked</string>
+    <string name="status_already_booked_message">You already booked this event.</string>
+</resources>
+
