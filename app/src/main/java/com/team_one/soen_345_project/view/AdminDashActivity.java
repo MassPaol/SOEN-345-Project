@@ -14,7 +14,7 @@ import com.team_one.soen_345_project.databinding.ActivityAdmindashBinding;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.ui.CreateEventSheet;
 import com.team_one.soen_345_project.ui.EditEventSheet;
-import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
+import com.team_one.soen_345_project.ui.FilterReserveEventSheet;
 import com.team_one.soen_345_project.viewmodel.admindash.AdminDashViewModel;
 
 public class AdminDashActivity extends AppCompatActivity {
@@ -79,7 +79,7 @@ public class AdminDashActivity extends AppCompatActivity {
         });
 
         binding.btnFilter.setOnClickListener(v -> {
-            FilterBottomSheetFragment sheet = FilterBottomSheetFragment.newInstance(
+            FilterReserveEventSheet sheet = FilterReserveEventSheet.newInstance(
                     filterState -> {
                         Log.d(TAG, "Filter applied: " + filterState.getCategory().getLabel());
                         adminDashViewModel.applyFilter(filterState);

@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class EventDetailsBottomSheetFragment extends BottomSheetDialogFragment {
+public class ReserveEventSheet extends BottomSheetDialogFragment {
 
     private static final String ARG_EVENT_ID = "event_id";
 
@@ -44,8 +44,8 @@ public class EventDetailsBottomSheetFragment extends BottomSheetDialogFragment {
         this.onBookingSuccessListener = listener;
     }
 
-    public static EventDetailsBottomSheetFragment newInstance(@NonNull String eventId) {
-        EventDetailsBottomSheetFragment fragment = new EventDetailsBottomSheetFragment();
+    public static ReserveEventSheet newInstance(@NonNull String eventId) {
+        ReserveEventSheet fragment = new ReserveEventSheet();
         Bundle args = new Bundle();
         args.putString(ARG_EVENT_ID, eventId);
         fragment.setArguments(args);
@@ -55,7 +55,7 @@ public class EventDetailsBottomSheetFragment extends BottomSheetDialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.bottom_sheet_event_details, container, false);
+        return inflater.inflate(R.layout.fragment_reserve_event, container, false);
     }
 
     @Override
@@ -112,20 +112,26 @@ public class EventDetailsBottomSheetFragment extends BottomSheetDialogFragment {
 
         boolean isFull = availableSpots <= 0;
 
-        // If user already booked this event, hide the Book Now button and show a message.
-        // Else if the event is full, hide the button and show a different message.
-        // Otherwise, show the button.
+        // Default UI state based on capacity.
+        tvEventFullMessage.setVisibility(isFull ? View.VISIBLE : View.GONE);
+        tvAlreadyBookedMessage.setVisibility(View.GONE);
+        btnBookNow.setVisibility(isFull ? View.GONE : View.VISIBLE);
+
+        // If user already booked this event, hide Book Now and show a message.
         IReservationRepository reservationRepository = Injection.provideReservationRepository();
         if (selectedEventId != null) {
             reservationRepository.isEventBookedByCurrentUser(selectedEventId, (message, booked) -> {
                 if (!isAdded()) return;
+
                 if (booked) {
                     tvAlreadyBookedMessage.setVisibility(View.VISIBLE);
+                    tvEventFullMessage.setVisibility(View.GONE);
                     btnBookNow.setVisibility(View.GONE);
-                } else if (isFull) {
-                    // If not booked but full, ensure the full message is shown and button hidden.
-                    tvEventFullMessage.setVisibility(View.VISIBLE);
-                    btnBookNow.setVisibility(View.GONE);
+                } else {
+                    // Not booked. Respect full/available.
+                    tvAlreadyBookedMessage.setVisibility(View.GONE);
+                    tvEventFullMessage.setVisibility(isFull ? View.VISIBLE : View.GONE);
+                    btnBookNow.setVisibility(isFull ? View.GONE : View.VISIBLE);
                 }
             });
         }

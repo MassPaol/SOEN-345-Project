@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.team_one.soen_345_project.databinding.ActivityAllEventsBinding;
 import com.team_one.soen_345_project.di.Injection;
 import com.team_one.soen_345_project.model.repository.IReservationRepository;
-import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
+import com.team_one.soen_345_project.ui.FilterReserveEventSheet;
 import com.team_one.soen_345_project.viewmodel.allevents.AllEventsViewModel;
 
 public class AllEventsActivity extends AppCompatActivity {
@@ -63,7 +63,7 @@ public class AllEventsActivity extends AppCompatActivity {
         });
 
         binding.btnFilter.setOnClickListener(v -> {
-            FilterBottomSheetFragment sheet = FilterBottomSheetFragment.newInstance(
+            FilterReserveEventSheet sheet = FilterReserveEventSheet.newInstance(
                     filterState -> {
                         Log.d(TAG, "Filter applied: " + filterState.getCategory().getLabel());
                         allEventsViewModel.applyFilter(filterState);
@@ -88,7 +88,7 @@ public class AllEventsActivity extends AppCompatActivity {
         userEventAdapter.setOnItemClickListener(event -> {
             if (event == null || event.getEventId() == null) return;
 
-            EventDetailsBottomSheetFragment bottomSheet = EventDetailsBottomSheetFragment.newInstance(event.getEventId());
+            ReserveEventSheet bottomSheet = ReserveEventSheet.newInstance(event.getEventId());
             bottomSheet.setEventProvider(eventId -> {
                 if (allEventsViewModel.getUiState().getValue() == null || allEventsViewModel.getUiState().getValue().getEvents() == null) {
                     return null;

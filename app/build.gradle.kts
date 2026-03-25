@@ -44,10 +44,14 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
+
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test:rules:1.7.0")
 
     // Import the BoM using the catalog reference
     implementation(platform(libs.firebase.bom))

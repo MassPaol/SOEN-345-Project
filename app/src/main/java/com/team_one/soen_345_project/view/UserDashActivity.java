@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.team_one.soen_345_project.databinding.ActivityUserdashBinding;
-import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
+import com.team_one.soen_345_project.ui.FilterReserveEventSheet;
 import com.team_one.soen_345_project.viewmodel.userdash.UserDashViewModel;
 
 public class UserDashActivity extends AppCompatActivity {
@@ -66,7 +66,7 @@ public class UserDashActivity extends AppCompatActivity {
         });
 
         binding.btnFilter.setOnClickListener(v -> {
-            FilterBottomSheetFragment sheet = FilterBottomSheetFragment.newInstance(
+            FilterReserveEventSheet sheet = FilterReserveEventSheet.newInstance(
                     filterState -> {
                         Log.d(TAG, "Filter applied: " + filterState.getCategory().getLabel());
                         userDashViewModel.applyFilter(filterState);

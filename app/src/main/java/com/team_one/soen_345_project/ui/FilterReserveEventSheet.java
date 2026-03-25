@@ -23,14 +23,12 @@ import com.team_one.soen_345_project.model.util.filter.FilterState;
 import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
+public class FilterReserveEventSheet extends BottomSheetDialogFragment {
 
     // Interfaces and Data types
     public interface OnFilterAppliedListener {
@@ -59,10 +57,10 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
     /**
      * Static factory method
      */
-    public static FilterBottomSheetFragment newInstance(
+    public static FilterReserveEventSheet newInstance(
             OnFilterAppliedListener listener) {
 
-        FilterBottomSheetFragment fragment = new FilterBottomSheetFragment();
+        FilterReserveEventSheet fragment = new FilterReserveEventSheet();
         // Storing directly in fields.
         fragment.listener = listener;
         return fragment;
