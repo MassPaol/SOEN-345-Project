@@ -5,6 +5,7 @@ import com.google.firebase.firestore.DocumentId;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Event {
     @DocumentId // AutoID by Firestore
@@ -42,9 +43,22 @@ public class Event {
     }
 
     public Event(HashMap<String, String> eventInfo) {
+        this((Map<String, String>) eventInfo);
+    }
+
+    /**
+     * Convenience constructor used by some UI flows/tests where event fields come from a map.
+     * Supports both the current key "description" and legacy key "disc".
+     */
+    public Event(Map<String, String> eventInfo) {
+        if (eventInfo == null) return;
+
         this.title = eventInfo.get("title");
 
         String desc = eventInfo.get("description");
+        if (desc == null) {
+            desc = eventInfo.get("disc");
+        }
         this.description = desc;
 
         String dateStr = eventInfo.get("date");

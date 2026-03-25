@@ -6,6 +6,7 @@ import static org.junit.Assert.*;
 import com.google.firebase.Timestamp;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.model.repository.IEventRepository;
+import com.team_one.soen_345_project.model.repository.IReservationRepository;
 import com.team_one.soen_345_project.model.util.filter.CategoryFilterOption;
 import com.team_one.soen_345_project.model.util.filter.FilterState;
 import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
@@ -25,6 +26,9 @@ public class UserDashViewModelFilterTest {
     @Mock
     private IEventRepository mockRepository;
 
+    @Mock
+    private IReservationRepository mockReservationRepository;
+
     private UserDashViewModel viewModel;
 
     private Event techEvent;
@@ -34,7 +38,7 @@ public class UserDashViewModelFilterTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
-        viewModel = new UserDashViewModel(mockRepository);
+        viewModel = new UserDashViewModel(mockRepository, mockReservationRepository);
 
         techEvent   = buildEvent("1", "Tech Talk",    CategoryFilterOption.TECH,   LocationFilterOption.MONTREAL, 20.0, false, new Timestamp(new Date(125, 4, 10)));
         sportsEvent = buildEvent("2", "Sports Night", CategoryFilterOption.SPORTS, LocationFilterOption.TORONTO,  50.0, true,  new Timestamp(new Date(125, 5, 15)));

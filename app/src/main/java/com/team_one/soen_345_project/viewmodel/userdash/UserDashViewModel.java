@@ -36,9 +36,19 @@ public class UserDashViewModel {
 
     // Parametrized constructor for testing use
     public UserDashViewModel(IEventRepository repository) {
-        this.iEventRepository = repository;
-        this.reservationRepository = Injection.provideReservationRepository();
+        this(repository, null);
     }
+
+    /**
+     * Test-friendly constructor that lets tests provide fake repositories.
+     */
+    public UserDashViewModel(IEventRepository repository, IReservationRepository reservationRepository) {
+        this.iEventRepository = repository;
+        this.reservationRepository = reservationRepository != null
+                ? reservationRepository
+                : Injection.provideReservationRepository();
+    }
+
     // Keep the no-arg constructor for production use
     public UserDashViewModel() {
         this.iEventRepository = Injection.provideEventRepository();
