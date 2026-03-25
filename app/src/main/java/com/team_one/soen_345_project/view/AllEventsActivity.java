@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.team_one.soen_345_project.databinding.ActivityAllEventsBinding;
+import com.team_one.soen_345_project.view.EventDetailsBottomSheetFragment;
 import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
 import com.team_one.soen_345_project.viewmodel.userdash.UserDashViewModel;
 
@@ -71,6 +72,24 @@ public class AllEventsActivity extends AppCompatActivity {
         userEventAdapter = new UserEventAdapter();
         binding.rvAllEvents.setLayoutManager(new LinearLayoutManager(this));
         binding.rvAllEvents.setAdapter(userEventAdapter);
+
+        userEventAdapter.setOnItemClickListener(event -> {
+            if (event == null || event.getEventId() == null) return;
+
+            EventDetailsBottomSheetFragment bottomSheet = EventDetailsBottomSheetFragment.newInstance(event.getEventId());
+            bottomSheet.setEventProvider(eventId -> {
+                if (userDashViewModel.getUiState().getValue() == null || userDashViewModel.getUiState().getValue().getEvents() == null) {
+                    return null;
+                }
+                for (com.team_one.soen_345_project.model.entity.Event e : userDashViewModel.getUiState().getValue().getEvents()) {
+                    if (e != null && eventId.equals(e.getEventId())) {
+                        return e;
+                    }
+                }
+                return null;
+            });
+            bottomSheet.show(getSupportFragmentManager(), "EventDetailsBottomSheetFragment");
+        });
     }
 
     private void setupObservers() {
@@ -103,4 +122,3 @@ public class AllEventsActivity extends AppCompatActivity {
         binding = null;
     }
 }
-
