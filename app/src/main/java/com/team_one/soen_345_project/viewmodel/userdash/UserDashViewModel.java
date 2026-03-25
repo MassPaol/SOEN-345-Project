@@ -1,30 +1,31 @@
 package com.team_one.soen_345_project.viewmodel.userdash;
 
-import android.util.Log;
-
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.firebase.Timestamp;
 import com.team_one.soen_345_project.di.Injection;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.model.repository.IEventRepository;
+import com.team_one.soen_345_project.model.repository.IReservationRepository;
+import com.team_one.soen_345_project.model.util.callback.BookedEventsCallback;
 import com.team_one.soen_345_project.model.util.callback.EventListCallback;
 import com.team_one.soen_345_project.model.util.filter.CategoryFilterOption;
 import com.team_one.soen_345_project.model.util.filter.FilterState;
 import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class UserDashViewModel {
-    private static final String TAG = "UserDashViewModel";
 
     private final MutableLiveData<UserDashUiState> _uiState =
             new MutableLiveData<>(new UserDashUiState.Builder(null, false).build());
 
     private final IEventRepository iEventRepository;
+    private final IReservationRepository reservationRepository;
 
     // Cache of all events for filtering
     private List<Event> allEvents = new ArrayList<>();
@@ -36,19 +37,19 @@ public class UserDashViewModel {
     // Parametrized constructor for testing use
     public UserDashViewModel(IEventRepository repository) {
         this.iEventRepository = repository;
+        this.reservationRepository = Injection.provideReservationRepository();
     }
     // Keep the no-arg constructor for production use
     public UserDashViewModel() {
         this.iEventRepository = Injection.provideEventRepository();
+        this.reservationRepository = Injection.provideReservationRepository();
     }
 
     // Load all available events from Firebase
     public void loadAllEvents() {
-        android.util.Log.d(TAG, "loadAllEvents() called");
         iEventRepository.getAllEvents(new EventListCallback() {
             @Override
             public void onEventsReceived(List<Event> events) {
-                android.util.Log.d(TAG, "onEventsReceived: " + events.size() + " events");
                 allEvents = new ArrayList<>(events);
                 int totalCount = events.size();
                 _uiState.postValue(new UserDashUiState.Builder(null, false)
@@ -59,7 +60,6 @@ public class UserDashViewModel {
 
             @Override
             public void onError(String errorMessage) {
-                android.util.Log.e(TAG, "loadAllEvents error: " + errorMessage);
                 _uiState.postValue(new UserDashUiState.Builder(errorMessage, false).build());
             }
         });
@@ -67,7 +67,6 @@ public class UserDashViewModel {
 
     // Filter events by title search query
     public void searchEvents(String query) {
-        android.util.Log.d(TAG, "searchEvents() called with query: " + query);
 
         List<Event> filteredEvents;
 
@@ -83,8 +82,6 @@ public class UserDashViewModel {
                 }
             }
         }
-
-        android.util.Log.d(TAG, "Filtered to " + filteredEvents.size() + " events");
 
         UserDashUiState currentState = _uiState.getValue();
         String message = currentState != null ? currentState.getMessage() : null;
@@ -123,5 +120,61 @@ public class UserDashViewModel {
                         (filterState.getMaxPrice() == null || event.getPrice() <= filterState.getMaxPrice())
                 )
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Loads and displays only the events that the current user has booked.
+     * Assumes events are already loaded into allEvents; if not, it will load them first.
+     */
+    public void loadBookedUpcomingEvents() {
+        if (allEvents == null || allEvents.isEmpty()) {
+            // Load events first, then filter.
+            loadAllEventsAndThenBooked();
+            return;
+        }
+
+        reservationRepository.getBookedEventIdsForCurrentUser(new BookedEventsCallback() {
+            @Override
+            public void onResult(Set<String> bookedEventIds) {
+                Set<String> booked = bookedEventIds != null ? bookedEventIds : new HashSet<>();
+                List<Event> bookedEvents = allEvents.stream()
+                        .filter(e -> e != null && e.getEventId() != null && booked.contains(e.getEventId()))
+                        .collect(Collectors.toList());
+
+                // Sort chronologically
+                bookedEvents.sort((e1, e2) -> {
+                    if (e1.getDate() == null || e2.getDate() == null) return 0;
+                    return e1.getDate().compareTo(e2.getDate());
+                });
+
+                _uiState.postValue(new UserDashUiState.Builder(null, false)
+                        .totalEventCount(allEvents.size())
+                        .events(bookedEvents)
+                        .build());
+            }
+
+            @Override
+            public void onError(String message) {
+                _uiState.postValue(new UserDashUiState.Builder(message, false)
+                        .totalEventCount(allEvents != null ? allEvents.size() : 0)
+                        .events(new ArrayList<>())
+                        .build());
+            }
+        });
+    }
+
+    private void loadAllEventsAndThenBooked() {
+        iEventRepository.getAllEvents(new EventListCallback() {
+            @Override
+            public void onEventsReceived(List<Event> events) {
+                allEvents = new ArrayList<>(events);
+                loadBookedUpcomingEvents();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                _uiState.postValue(new UserDashUiState.Builder(errorMessage, false).build());
+            }
+        });
     }
 }

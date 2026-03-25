@@ -1,0 +1,148 @@
+package com.team_one.soen_345_project.model.repository.impl;
+
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Transaction;
+import com.team_one.soen_345_project.model.entity.Event;
+import com.team_one.soen_345_project.model.repository.IAuthRepository;
+import com.team_one.soen_345_project.model.repository.IReservationRepository;
+import com.team_one.soen_345_project.model.util.callback.BookedEventsCallback;
+import com.team_one.soen_345_project.model.util.callback.ReservationCallback;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+public class FirebaseReservationRepository implements IReservationRepository {
+
+    private static final String COLLECTION_EVENT = "event";
+    private static final String COLLECTION_RESERVATION = "reservation";
+
+    private final IAuthRepository authRepository;
+    private final FirebaseFirestore firestore;
+
+    public FirebaseReservationRepository() {
+        this.authRepository = new FirebaseAuthRepository();
+        this.firestore = FirebaseFirestore.getInstance();
+    }
+
+    public FirebaseReservationRepository(IAuthRepository authRepository, FirebaseFirestore firestore) {
+        this.authRepository = authRepository;
+        this.firestore = firestore;
+    }
+
+    @Override
+    public void bookEvent(String eventId, ReservationCallback callback) {
+        String uid = authRepository.getCurrentUserUid();
+        if (uid == null) {
+            callback.onResult("No user logged in", false);
+            return;
+        }
+        if (eventId == null || eventId.trim().isEmpty()) {
+            callback.onResult("Invalid event", false);
+            return;
+        }
+
+        // If the user already booked the event, this doc will already exist.
+        String reservationId = uid + "_" + eventId;
+
+        DocumentReference eventRef = firestore.collection(COLLECTION_EVENT).document(eventId);
+        DocumentReference reservationRef = firestore.collection(COLLECTION_RESERVATION).document(reservationId);
+
+        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+            // Prevent duplicates
+            DocumentSnapshot existingReservation = transaction.get(reservationRef);
+            if (existingReservation.exists()) {
+                throw new IllegalStateException("Already booked");
+            }
+
+            //  Check capacity
+            DocumentSnapshot snapshot = transaction.get(eventRef);
+            Event event = snapshot.toObject(Event.class);
+            if (event == null) {
+                throw new IllegalStateException("Event not found");
+            }
+
+            int capacity = event.getCapacity();
+            int reservations = event.getReservations();
+            int available = capacity - reservations;
+
+            if (available <= 0) {
+                throw new IllegalStateException("No spots left");
+            }
+
+            int newReservations = reservations + 1;
+            boolean isNowFull = newReservations >= capacity;
+
+            // Increment reservations & update full flag
+            transaction.update(eventRef, "reservations", newReservations);
+            transaction.update(eventRef, "full", isNowFull);
+
+            // Create reservation doc
+            Map<String, Object> reservationData = new HashMap<>();
+            reservationData.put("reservationId", reservationId);
+            reservationData.put("userId", uid);
+            reservationData.put("eventId", eventId);
+            reservationData.put("timestamp", Timestamp.now());
+            reservationData.put("status", "CONFIRMED");
+
+            transaction.set(reservationRef, reservationData);
+            return null;
+        }).addOnSuccessListener(unused -> callback.onResult("Event booked successfully", true))
+          .addOnFailureListener(e -> {
+              String msg = (e.getMessage() != null) ? e.getMessage() : "Failed to book event";
+              String lower = msg.toLowerCase();
+
+              if (lower.contains("already booked")) {
+                  callback.onResult("You already booked this event", false);
+                  return;
+              }
+              if (lower.contains("no spots") || lower.contains("no spot") || lower.contains("no space")) {
+                  callback.onResult("No spots left", false);
+                  return;
+              }
+              callback.onResult(msg, false);
+          });
+    }
+
+    @Override
+    public void getBookedEventIdsForCurrentUser(BookedEventsCallback callback) {
+        String uid = authRepository.getCurrentUserUid();
+        if (uid == null) {
+            callback.onError("No user logged in");
+            return;
+        }
+
+        firestore.collection(COLLECTION_RESERVATION)
+                .whereEqualTo("userId", uid)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    Set<String> booked = new HashSet<>();
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String eventId = doc.getString("eventId");
+                        if (eventId != null) booked.add(eventId);
+                    }
+                    callback.onResult(booked);
+                })
+                .addOnFailureListener(e -> callback.onError(e.getMessage() != null ? e.getMessage() : "Failed to load reservations"));
+    }
+
+    @Override
+    public void isEventBookedByCurrentUser(String eventId, ReservationCallback callback) {
+        getBookedEventIdsForCurrentUser(new BookedEventsCallback() {
+            @Override
+            public void onResult(Set<String> bookedEventIds) {
+                boolean booked = bookedEventIds != null && bookedEventIds.contains(eventId);
+                callback.onResult(booked ? "BOOKED" : "NOT_BOOKED", booked);
+            }
+
+            @Override
+            public void onError(String message) {
+                callback.onResult(message != null ? message : "Failed", false);
+            }
+        });
+    }
+}

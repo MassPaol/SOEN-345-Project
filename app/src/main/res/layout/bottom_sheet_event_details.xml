@@ -116,6 +116,26 @@
             android:textColor="?attr/colorPrimary" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/tvEventFullMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/event_full_message"
+        android:textStyle="bold"
+        android:textColor="@android:color/holo_red_dark"
+        android:paddingVertical="8dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvAlreadyBookedMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/status_already_booked_message"
+        android:textStyle="bold"
+        android:textColor="@android:color/holo_green_dark"
+        android:paddingVertical="8dp"
+        android:visibility="gone" />
+
     <Button
         android:id="@+id/btnBookNow"
         android:layout_width="match_parent"
@@ -126,4 +146,3 @@
         android:visibility="gone"/>
 
 </LinearLayout>
-

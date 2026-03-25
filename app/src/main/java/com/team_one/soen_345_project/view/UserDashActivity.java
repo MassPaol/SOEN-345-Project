@@ -12,12 +12,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.team_one.soen_345_project.databinding.ActivityUserdashBinding;
-import com.team_one.soen_345_project.model.util.filter.LocationFilterOption;
 import com.team_one.soen_345_project.ui.FilterBottomSheetFragment;
 import com.team_one.soen_345_project.viewmodel.userdash.UserDashViewModel;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class UserDashActivity extends AppCompatActivity {
     private static final String TAG = "UserDashActivity";
@@ -41,8 +37,8 @@ public class UserDashActivity extends AppCompatActivity {
         setupRecyclerView();
         setupObservers();
 
-        // Load all events on start
-        userDashViewModel.loadAllEvents();
+        // Load only the user's booked events for the Upcoming Events list
+        userDashViewModel.loadBookedUpcomingEvents();
 
         // ----- UI Listeners -----
 
@@ -82,6 +78,7 @@ public class UserDashActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         userEventAdapter = new UserEventAdapter();
+        userEventAdapter.setShowStatus(false);
         binding.rvUpcomingEvents.setLayoutManager(new LinearLayoutManager(this));
         binding.rvUpcomingEvents.setAdapter(userEventAdapter);
     }
@@ -120,12 +117,15 @@ public class UserDashActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh upcoming events when returning from booking flow
+        userDashViewModel.loadBookedUpcomingEvents();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         binding = null;
     }
 }
-
-
-
-

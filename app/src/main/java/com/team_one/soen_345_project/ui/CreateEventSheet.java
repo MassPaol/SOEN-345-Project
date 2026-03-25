@@ -73,6 +73,8 @@ public class CreateEventSheet extends BottomSheetDialogFragment {
                 .orElse(CategoryFilterOption.ALL);
 
         eventFields.put("title", eventTitleInput.getText().toString());
+        eventFields.put("description", eventDiscInput.getText().toString());
+        // Backwards compatibility (older code used "disc")
         eventFields.put("disc", eventDiscInput.getText().toString());
         eventFields.put("location", locationEnum.getLabel());   // display name stored in Firebase
         eventFields.put("location_id", locationEnum.getId());   // id for filtering
