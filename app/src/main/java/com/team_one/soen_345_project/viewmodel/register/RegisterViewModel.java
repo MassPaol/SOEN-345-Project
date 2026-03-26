@@ -20,7 +20,15 @@ public class RegisterViewModel extends ViewModel {
             new MutableLiveData<>(new RegisterUiState(null,null));
 
     // Repository interface instantiation
-    private final IAuthRepository iAuthRepository = Injection.provideAuthRepository();
+    private final IAuthRepository iAuthRepository;
+
+    public RegisterViewModel() {
+        this.iAuthRepository = Injection.provideAuthRepository();
+    }
+
+    public RegisterViewModel(IAuthRepository authRepository) {
+        this.iAuthRepository = authRepository;
+    }
 
     public void onRegisterClicked(String[] registrationFields) {
 

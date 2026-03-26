@@ -11,7 +11,15 @@ import com.team_one.soen_345_project.model.repository.IAuthRepository;
 public class LoginViewModel extends ViewModel {
     private static final String TAG = "LoginViewModel";
     private final MutableLiveData<LoginUiState> _uiState = new MutableLiveData<>(new LoginUiState(null, false, false, false));
-    private final IAuthRepository iAuthRepository = Injection.provideAuthRepository();
+    private final IAuthRepository iAuthRepository;
+
+    public LoginViewModel() {
+        this.iAuthRepository = Injection.provideAuthRepository();
+    }
+
+    public LoginViewModel(IAuthRepository authRepository) {
+        this.iAuthRepository = authRepository;
+    }
 
     public LiveData<LoginUiState> getUiState() {
         return _uiState;

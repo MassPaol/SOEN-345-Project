@@ -33,6 +33,11 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -47,6 +52,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.json:json:20231013")
 
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
