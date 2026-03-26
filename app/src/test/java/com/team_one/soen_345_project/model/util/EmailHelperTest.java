@@ -2,6 +2,7 @@ package com.team_one.soen_345_project.model.util;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 import com.team_one.soen_345_project.model.entity.Event;
 
 import static org.junit.Assert.assertEquals;
