@@ -10,6 +10,7 @@ import com.team_one.soen_345_project.model.repository.IAuthRepository;
 import com.team_one.soen_345_project.model.repository.IReservationRepository;
 import com.team_one.soen_345_project.model.util.callback.BookedEventsCallback;
 import com.team_one.soen_345_project.model.util.callback.ReservationCallback;
+import com.team_one.soen_345_project.model.util.EmailHelper;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,7 +53,7 @@ public class FirebaseReservationRepository implements IReservationRepository {
         DocumentReference eventRef = firestore.collection(COLLECTION_EVENT).document(eventId);
         DocumentReference reservationRef = firestore.collection(COLLECTION_RESERVATION).document(reservationId);
 
-        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+        firestore.runTransaction((Transaction.Function<Event>) transaction -> {
             // Prevent duplicates
             DocumentSnapshot existingReservation = transaction.get(reservationRef);
             if (existingReservation.exists()) {
@@ -64,6 +65,9 @@ public class FirebaseReservationRepository implements IReservationRepository {
             Event event = snapshot.toObject(Event.class);
             if (event == null) {
                 throw new IllegalStateException("Event not found");
+            }
+            if (event.getEventId() == null) {
+                event.setEventId(snapshot.getId());
             }
 
             int capacity = event.getCapacity();
@@ -90,8 +94,14 @@ public class FirebaseReservationRepository implements IReservationRepository {
             reservationData.put("status", "CONFIRMED");
 
             transaction.set(reservationRef, reservationData);
-            return null;
-        }).addOnSuccessListener(unused -> callback.onResult("Event booked successfully", true))
+            return event;
+        }).addOnSuccessListener(event -> {
+            String email = authRepository.getCurrentUserEmail();
+            if (email != null) {
+                EmailHelper.sendEventStatusEmail(email, event, false);
+            }
+            callback.onResult("Event booked successfully", true);
+        })
           .addOnFailureListener(e -> {
               String msg = (e.getMessage() != null) ? e.getMessage() : "Failed to book event";
               String lower = msg.toLowerCase();
@@ -147,7 +157,7 @@ public class FirebaseReservationRepository implements IReservationRepository {
         DocumentReference eventRef       = firestore.collection(COLLECTION_EVENT).document(eventId);
         DocumentReference reservationRef = firestore.collection(COLLECTION_RESERVATION).document(reservationId);
 
-        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+        firestore.runTransaction((Transaction.Function<Event>) transaction -> {
                     // Confirm reservation exists
                     DocumentSnapshot reservationSnap = transaction.get(reservationRef);
                     if (!reservationSnap.exists()) {
@@ -160,6 +170,9 @@ public class FirebaseReservationRepository implements IReservationRepository {
                     if (event == null) {
                         throw new IllegalStateException("Event not found");
                     }
+                    if (event.getEventId() == null) {
+                        event.setEventId(eventSnap.getId());
+                    }
 
                     int newReservations = Math.max(0, event.getReservations() - 1);
 
@@ -167,9 +180,15 @@ public class FirebaseReservationRepository implements IReservationRepository {
                     transaction.update(eventRef, "full", false);   // can never be full after a cancellation
                     transaction.delete(reservationRef);
 
-                    return null;
+                    return event;
                 })
-                .addOnSuccessListener(unused -> callback.onResult("Reservation cancelled successfully", true))
+                .addOnSuccessListener(event -> {
+                    String email = authRepository.getCurrentUserEmail();
+                    if (email != null) {
+                        EmailHelper.sendEventStatusEmail(email, event, true);
+                    }
+                    callback.onResult("Reservation cancelled successfully", true);
+                })
                 .addOnFailureListener(e -> {
                     String msg = e.getMessage() != null ? e.getMessage() : "Failed to cancel reservation";
                     if (msg.toLowerCase().contains("no booking")) {

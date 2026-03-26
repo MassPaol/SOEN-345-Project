@@ -6,4 +6,5 @@ public interface IAuthRepository {
     void createUser(String[] registrationFields, Callback callback);
     void loginUser(String email, String password, Callback callback);
     String getCurrentUserUid();
+    String getCurrentUserEmail();
 }

@@ -9,6 +9,10 @@ public class User {
     private String password;
     private boolean isAdmin;
 
+    // Required by Firestore for object mapping
+    public User() {
+    }
+
     public User(String uid, String firstName, String lastName,
                 String email, String phoneNumber, String password) {
         this.uid = uid;

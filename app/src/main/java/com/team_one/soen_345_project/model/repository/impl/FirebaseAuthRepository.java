@@ -40,10 +40,15 @@ public class FirebaseAuthRepository implements IAuthRepository {
                         // Create user profile in firestore
                         User newUser = new User(uid, firstName, lastName, email,
                                 phoneNumber, password);
-                        firestore.collection("user").document(uid).set(newUser);
-
-                        // Update callback for communication with ViewModel
-                        callback.onResult("success", true);
+                        firestore.collection("user").document(uid).set(newUser)
+                                .addOnSuccessListener(aVoid -> {
+                                    // Update callback for communication with ViewModel
+                                    callback.onResult("success", true);
+                                })
+                                .addOnFailureListener(e -> {
+                                    // Should rollback auth or at least notify user, but to start:
+                                    callback.onResult(e.getMessage() != null ? e.getMessage() : "Database error", false);
+                                });
                     } else {
                         // Get the exception on auth failure
                         Exception e = task.getException();
@@ -124,5 +129,11 @@ public class FirebaseAuthRepository implements IAuthRepository {
     public String getCurrentUserUid() {
         FirebaseUser user = auth.getCurrentUser();
         return user != null ? user.getUid() : null;
+    }
+
+    @Override
+    public String getCurrentUserEmail() {
+        FirebaseUser user = auth.getCurrentUser();
+        return user != null ? user.getEmail() : null;
     }
 }
