@@ -13,4 +13,6 @@ public interface IReservationRepository {
     void cancelEvent(String eventId, ReservationCallback callback);   // NEW
 
     void isEventBookedByCurrentUser(String eventId, ReservationCallback callback);
+
+    void deleteAllReservationsForEvent(String eventId, ReservationCallback callback);
 }

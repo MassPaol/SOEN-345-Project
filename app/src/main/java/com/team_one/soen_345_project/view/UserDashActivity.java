@@ -11,6 +11,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.team_one.soen_345_project.databinding.ActivityUserdashBinding;
 import com.team_one.soen_345_project.ui.FilterReserveEventSheet;
 import com.team_one.soen_345_project.viewmodel.userdash.UserDashViewModel;
@@ -33,6 +34,14 @@ public class UserDashActivity extends AppCompatActivity {
 
         // Extend layout into system bars for edge-to-edge look
         EdgeToEdge.enable(this);
+
+        binding.btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(UserDashActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
 
         setupRecyclerView();
         setupObservers();

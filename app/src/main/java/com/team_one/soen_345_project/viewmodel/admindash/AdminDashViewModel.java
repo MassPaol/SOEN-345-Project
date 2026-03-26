@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.team_one.soen_345_project.di.Injection;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.model.repository.IEventRepository;
+import com.team_one.soen_345_project.model.repository.IReservationRepository;
 import com.team_one.soen_345_project.model.util.callback.EventListCallback;
 import com.team_one.soen_345_project.model.util.filter.CategoryFilterOption;
 import com.team_one.soen_345_project.model.util.filter.FilterState;
@@ -21,15 +22,23 @@ public class AdminDashViewModel {
             new MutableLiveData<>(new AdminDashUiState.Builder(null, false).build());
 
     IEventRepository iEventRepository;
+    IReservationRepository iReservationRepository;
     private List<Event> allEvents = new ArrayList<>();
 
     // Parametrized constructor for testing use
+    public AdminDashViewModel(IEventRepository repository, IReservationRepository reservationRepository) {
+        this.iEventRepository = repository;
+        this.iReservationRepository = reservationRepository;
+    }
+    // Backward-compatible constructor for existing tests
     public AdminDashViewModel(IEventRepository repository) {
         this.iEventRepository = repository;
+        this.iReservationRepository = Injection.provideReservationRepository();
     }
     // Keep the no-arg constructor for production use
     public AdminDashViewModel() {
         this.iEventRepository = Injection.provideEventRepository();
+        this.iReservationRepository = Injection.provideReservationRepository();
     }
 
     public void saveEvent(HashMap<String, String> eventInfo) {
@@ -99,13 +108,20 @@ public class AdminDashViewModel {
     }
 
     public void deleteEvent(String eventId) {
-        iEventRepository.deleteEvent(eventId, (message, isSuccess) -> {
-            if (isSuccess) {
-                _uiState.postValue(new AdminDashUiState.Builder(message, true).build());
-                loadAllEvents();
-            } else {
-                _uiState.postValue(new AdminDashUiState.Builder(message, false).build());
-            }
+        // First delete reservations associated with the event
+        iReservationRepository.deleteAllReservationsForEvent(eventId, (reservationMsg, reservationSuccess) -> {
+            // Once reservations are deleted (or if there are none/fails), delete the event itself
+            // Even if reservation deletion somehow fails (rare), we still want to proceed
+            // to delete the event so it stops showing up. Or optionally halt.
+            // Based on requirements: "delete all associated reservations using the eventId" -> proceed to delete.
+            iEventRepository.deleteEvent(eventId, (message, isSuccess) -> {
+                if (isSuccess) {
+                    _uiState.postValue(new AdminDashUiState.Builder(message, true).build());
+                    loadAllEvents();
+                } else {
+                    _uiState.postValue(new AdminDashUiState.Builder(message, false).build());
+                }
+            });
         });
     }
 

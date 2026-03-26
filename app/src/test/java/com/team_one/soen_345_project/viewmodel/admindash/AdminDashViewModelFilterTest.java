@@ -26,6 +26,9 @@ public class AdminDashViewModelFilterTest {
     @Mock
     private IEventRepository mockRepository;
 
+    @Mock
+    private com.team_one.soen_345_project.model.repository.IReservationRepository mockReservationRepository;
+
     private AdminDashViewModel viewModel;
 
     private Event techEvent;    // category: TECH,   location: MONTREAL, price: 20, full: false
@@ -35,7 +38,7 @@ public class AdminDashViewModelFilterTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
-        viewModel = new AdminDashViewModel(mockRepository);
+        viewModel = new AdminDashViewModel(mockRepository, mockReservationRepository);
 
         techEvent   = buildEvent("1", "Tech Talk",    CategoryFilterOption.TECH,   LocationFilterOption.MONTREAL, 20.0, false, new Timestamp(new Date(125, 4, 10)));
         sportsEvent = buildEvent("2", "Sports Night", CategoryFilterOption.SPORTS, LocationFilterOption.TORONTO,  50.0, true,  new Timestamp(new Date(125, 5, 15)));

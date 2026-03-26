@@ -1,5 +1,6 @@
 package com.team_one.soen_345_project.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -10,6 +11,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.team_one.soen_345_project.databinding.ActivityAdmindashBinding;
 import com.team_one.soen_345_project.model.entity.Event;
 import com.team_one.soen_345_project.ui.CreateEventSheet;
@@ -38,6 +40,14 @@ public class AdminDashActivity extends AppCompatActivity {
 
         // UI/UX: Extends the layout into system status/navigation bars for a modern edge-to-edge look
         EdgeToEdge.enable(this);
+
+        binding.btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(AdminDashActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
 
         // Setup RecyclerView
         setupRecyclerView();

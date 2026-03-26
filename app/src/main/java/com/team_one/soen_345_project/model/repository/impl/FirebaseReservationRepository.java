@@ -214,4 +214,57 @@ public class FirebaseReservationRepository implements IReservationRepository {
             }
         });
     }
+
+    @Override
+    public void deleteAllReservationsForEvent(String eventId, ReservationCallback callback) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            callback.onResult("Invalid event id", false);
+            return;
+        }
+
+        // Fetch event details first so we can include them in the cancellation emails
+        firestore.collection(COLLECTION_EVENT).document(eventId).get().addOnSuccessListener(eventDoc -> {
+            Event event = eventDoc.exists() ? eventDoc.toObject(Event.class) : null;
+
+            firestore.collection(COLLECTION_RESERVATION)
+                    .whereEqualTo("eventId", eventId)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        if (querySnapshot.isEmpty()) {
+                            // No reservations exist, so consider it a success
+                            callback.onResult("No reservations to delete.", true);
+                            return;
+                        }
+
+                        // Use a WriteBatch wrapper or loop to delete
+                        com.google.firebase.firestore.WriteBatch batch = firestore.batch();
+                        for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+
+                            // Send an email to the user whose reservation is being cancelled
+                            String userId = doc.getString("userId");
+                            if (userId != null && event != null) {
+                                firestore.collection("user").document(userId).get().addOnSuccessListener(userDoc -> {
+                                    if (userDoc.exists()) {
+                                        String email = userDoc.getString("email");
+                                        if (email != null && !email.isEmpty()) {
+                                            EmailHelper.sendEventStatusEmail(email, event, true);
+                                        }
+                                    }
+                                });
+                            }
+
+                            batch.delete(doc.getReference());
+                        }
+
+                        batch.commit()
+                            .addOnSuccessListener(aVoid -> callback.onResult("Deleted all associated reservations.", true))
+                            .addOnFailureListener(e -> callback.onResult("Failed to delete reservations", false));
+                    })
+                    .addOnFailureListener(e -> callback.onResult("Failed to query reservations: " + e.getMessage(), false));
+        }).addOnFailureListener(e -> {
+            // Fallback: If we couldn't fetch event data, we should probably still try to clean up the DB
+            callback.onResult("Failed to fetch event data for email cancellation.", false);
+
+        });
+    }
 }
