@@ -187,4 +187,20 @@ public class UserDashViewModel {
             }
         });
     }
+
+    public void cancelBooking(String eventId) {
+        reservationRepository.cancelEvent(eventId, (message, success) -> {
+            if (success) {
+                // Invalidate cache so the cancelled event drops from the booked list
+                allEvents.clear();
+                loadBookedUpcomingEvents();
+            } else {
+                UserDashUiState current = _uiState.getValue();
+                _uiState.postValue(new UserDashUiState.Builder(message, false)
+                        .totalEventCount(current != null ? current.getTotalEventCount() : 0)
+                        .events(current != null ? current.getEvents() : new ArrayList<>())
+                        .build());
+            }
+        });
+    }
 }

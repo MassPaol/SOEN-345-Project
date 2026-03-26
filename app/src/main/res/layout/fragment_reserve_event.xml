@@ -137,6 +137,14 @@
         android:visibility="gone" />
 
     <Button
+        android:id="@+id/btnCancelBooking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cancel Reservation"
+        android:visibility="gone"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+    <Button
         android:id="@+id/btnBookNow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

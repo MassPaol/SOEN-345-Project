@@ -131,6 +131,56 @@ public class FirebaseReservationRepository implements IReservationRepository {
     }
 
     @Override
+    public void cancelEvent(String eventId, ReservationCallback callback) {
+        String uid = authRepository.getCurrentUserUid();
+        if (uid == null) {
+            callback.onResult("No user logged in", false);
+            return;
+        }
+        if (eventId == null || eventId.trim().isEmpty()) {
+            callback.onResult("Invalid event", false);
+            return;
+        }
+
+        String reservationId = uid + "_" + eventId;
+
+        DocumentReference eventRef       = firestore.collection(COLLECTION_EVENT).document(eventId);
+        DocumentReference reservationRef = firestore.collection(COLLECTION_RESERVATION).document(reservationId);
+
+        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+                    // Confirm reservation exists
+                    DocumentSnapshot reservationSnap = transaction.get(reservationRef);
+                    if (!reservationSnap.exists()) {
+                        throw new IllegalStateException("No booking found");
+                    }
+
+                    // Read current event state
+                    DocumentSnapshot eventSnap = transaction.get(eventRef);
+                    Event event = eventSnap.toObject(Event.class);
+                    if (event == null) {
+                        throw new IllegalStateException("Event not found");
+                    }
+
+                    int newReservations = Math.max(0, event.getReservations() - 1);
+
+                    transaction.update(eventRef, "reservations", newReservations);
+                    transaction.update(eventRef, "full", false);   // can never be full after a cancellation
+                    transaction.delete(reservationRef);
+
+                    return null;
+                })
+                .addOnSuccessListener(unused -> callback.onResult("Reservation cancelled successfully", true))
+                .addOnFailureListener(e -> {
+                    String msg = e.getMessage() != null ? e.getMessage() : "Failed to cancel reservation";
+                    if (msg.toLowerCase().contains("no booking")) {
+                        callback.onResult("You have not booked this event", false);
+                    } else {
+                        callback.onResult(msg, false);
+                    }
+                });
+    }
+
+    @Override
     public void isEventBookedByCurrentUser(String eventId, ReservationCallback callback) {
         getBookedEventIdsForCurrentUser(new BookedEventsCallback() {
             @Override

@@ -10,6 +10,7 @@ public interface IReservationRepository {
      * Load the set of eventIds already booked by the currently logged-in user.
      */
     void getBookedEventIdsForCurrentUser(BookedEventsCallback callback);
+    void cancelEvent(String eventId, ReservationCallback callback);   // NEW
 
     void isEventBookedByCurrentUser(String eventId, ReservationCallback callback);
 }

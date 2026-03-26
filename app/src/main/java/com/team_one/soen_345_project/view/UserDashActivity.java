@@ -81,6 +81,28 @@ public class UserDashActivity extends AppCompatActivity {
         userEventAdapter.setShowStatus(false);
         binding.rvUpcomingEvents.setLayoutManager(new LinearLayoutManager(this));
         binding.rvUpcomingEvents.setAdapter(userEventAdapter);
+
+        userEventAdapter.setOnItemClickListener(event -> {
+            if (event == null || event.getEventId() == null) return;
+
+            ReserveEventSheet bottomSheet = ReserveEventSheet.newInstance(event.getEventId());
+            bottomSheet.setEventProvider(eventId -> {
+                if (userDashViewModel.getUiState().getValue() == null || userDashViewModel.getUiState().getValue().getEvents() == null) {
+                    return null;
+                }
+                for (com.team_one.soen_345_project.model.entity.Event e : userDashViewModel.getUiState().getValue().getEvents()) {
+                    if (e != null && eventId.equals(e.getEventId())) {
+                        return e;
+                    }
+                }
+                return null;
+            });
+            bottomSheet.setOnBookingSuccessListener(bookedEventId -> {
+                // Refresh booked events
+                userDashViewModel.loadBookedUpcomingEvents();
+            });
+            bottomSheet.show(getSupportFragmentManager(), "EventDetailsBottomSheetFragment");
+        });
     }
 
     private void setupObservers() {

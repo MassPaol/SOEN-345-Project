@@ -54,7 +54,8 @@ public class ReserveEventSheet extends BottomSheetDialogFragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_reserve_event, container, false);
     }
 
@@ -80,24 +81,26 @@ public class ReserveEventSheet extends BottomSheetDialogFragment {
         final Event selectedEvent = event;
         final String selectedEventId = selectedEvent.getEventId();
 
-        TextView tvTitle = view.findViewById(R.id.tvSheetEventTitle);
-        TextView tvDate = view.findViewById(R.id.tvSheetEventDate);
-        TextView tvLocation = view.findViewById(R.id.tvSheetEventLocation);
-        TextView tvCategory = view.findViewById(R.id.tvSheetEventCategory);
-        TextView tvDescription = view.findViewById(R.id.tvSheetEventDescription);
-        TextView tvCapacity = view.findViewById(R.id.tvSheetEventCapacity);
-        TextView tvPrice = view.findViewById(R.id.tvSheetEventPrice);
-        TextView tvEventFullMessage = view.findViewById(R.id.tvEventFullMessage);
+        TextView tvTitle               = view.findViewById(R.id.tvSheetEventTitle);
+        TextView tvDate                = view.findViewById(R.id.tvSheetEventDate);
+        TextView tvLocation            = view.findViewById(R.id.tvSheetEventLocation);
+        TextView tvCategory            = view.findViewById(R.id.tvSheetEventCategory);
+        TextView tvDescription         = view.findViewById(R.id.tvSheetEventDescription);
+        TextView tvCapacity            = view.findViewById(R.id.tvSheetEventCapacity);
+        TextView tvPrice               = view.findViewById(R.id.tvSheetEventPrice);
+        TextView tvEventFullMessage    = view.findViewById(R.id.tvEventFullMessage);
         TextView tvAlreadyBookedMessage = view.findViewById(R.id.tvAlreadyBookedMessage);
-        Button btnBookNow = view.findViewById(R.id.btnBookNow);
+        Button btnBookNow              = view.findViewById(R.id.btnBookNow);
+        Button btnCancelBooking        = view.findViewById(R.id.btnCancelBooking);
+
+        // --- Populate fields ---
 
         tvTitle.setText(event.getTitle() != null ? event.getTitle() : "");
 
         if (event.getDate() != null) {
             SimpleDateFormat dateFormat = new SimpleDateFormat(
                     "MMM dd, yyyy 'at' hh:mm a", Locale.getDefault());
-            Date date = event.getDate().toDate();
-            tvDate.setText(dateFormat.format(date));
+            tvDate.setText(dateFormat.format(event.getDate().toDate()));
         } else {
             tvDate.setText("Date not set");
         }
@@ -107,60 +110,86 @@ public class ReserveEventSheet extends BottomSheetDialogFragment {
         tvDescription.setText(event.getDescription() != null ? event.getDescription() : "");
 
         int availableSpots = Math.max(0, selectedEvent.getCapacity() - selectedEvent.getReservations());
-        tvCapacity.setText(String.format(Locale.getDefault(), "Capacity: %d (%d available)", selectedEvent.getCapacity(), availableSpots));
+        tvCapacity.setText(String.format(Locale.getDefault(),
+                "Capacity: %d (%d available)", selectedEvent.getCapacity(), availableSpots));
         tvPrice.setText(String.format(Locale.getDefault(), "$%.2f", selectedEvent.getPrice()));
 
         boolean isFull = availableSpots <= 0;
 
-        // Default UI state based on capacity.
+        // --- Default UI state (before async booking check) ---
         tvEventFullMessage.setVisibility(isFull ? View.VISIBLE : View.GONE);
         tvAlreadyBookedMessage.setVisibility(View.GONE);
+        btnCancelBooking.setVisibility(View.GONE);
         btnBookNow.setVisibility(isFull ? View.GONE : View.VISIBLE);
 
-        // If user already booked this event, hide Book Now and show a message.
-        IReservationRepository reservationRepository = Injection.provideReservationRepository();
+        // --- Async: check if user already booked, then update UI ---
         if (selectedEventId != null) {
-            reservationRepository.isEventBookedByCurrentUser(selectedEventId, (message, booked) -> {
+            IReservationRepository repo = Injection.provideReservationRepository();
+            repo.isEventBookedByCurrentUser(selectedEventId, (message, booked) -> {
                 if (!isAdded()) return;
 
                 if (booked) {
                     tvAlreadyBookedMessage.setVisibility(View.VISIBLE);
+                    btnCancelBooking.setVisibility(View.VISIBLE);
                     tvEventFullMessage.setVisibility(View.GONE);
                     btnBookNow.setVisibility(View.GONE);
                 } else {
-                    // Not booked. Respect full/available.
                     tvAlreadyBookedMessage.setVisibility(View.GONE);
+                    btnCancelBooking.setVisibility(View.GONE);
                     tvEventFullMessage.setVisibility(isFull ? View.VISIBLE : View.GONE);
                     btnBookNow.setVisibility(isFull ? View.GONE : View.VISIBLE);
                 }
             });
         }
 
+        // --- Book button ---
         btnBookNow.setOnClickListener(v -> {
-            // Quick UX check; authoritative check is done in the Firestore transaction.
             if (selectedEventId == null || selectedEventId.trim().isEmpty()) {
                 Toast.makeText(requireContext(), "Invalid event", Toast.LENGTH_LONG).show();
                 return;
             }
 
             btnBookNow.setEnabled(false);
-
-            IReservationRepository reservationRepositoryForClick = Injection.provideReservationRepository();
-            reservationRepositoryForClick.bookEvent(selectedEventId, (message, success) -> {
+            IReservationRepository repo = Injection.provideReservationRepository();
+            repo.bookEvent(selectedEventId, (message, success) -> {
                 if (!isAdded()) return;
 
                 Toast.makeText(requireContext(),
-                        success ? "Event booked successfully" : (message != null ? message : "Failed to book event"),
+                        success ? "Event booked successfully"
+                                : (message != null ? message : "Failed to book event"),
                         Toast.LENGTH_LONG).show();
 
                 btnBookNow.setEnabled(true);
 
                 if (!success && message != null) {
-                    String lowerMsg = message.toLowerCase(Locale.getDefault());
-                    if (lowerMsg.contains("no spots") || lowerMsg.contains("already")) {
+                    String lower = message.toLowerCase(Locale.getDefault());
+                    if (lower.contains("no spots") || lower.contains("already")) {
                         btnBookNow.setVisibility(View.GONE);
                     }
                 }
+
+                if (success) {
+                    if (onBookingSuccessListener != null) {
+                        onBookingSuccessListener.onBookingSuccess(selectedEventId);
+                    }
+                    dismiss();
+                }
+            });
+        });
+
+        // --- Cancel button ---
+        btnCancelBooking.setOnClickListener(v -> {
+            btnCancelBooking.setEnabled(false);
+            IReservationRepository repo = Injection.provideReservationRepository();
+            repo.cancelEvent(selectedEventId, (message, success) -> {
+                if (!isAdded()) return;
+
+                Toast.makeText(requireContext(),
+                        success ? "Reservation cancelled"
+                                : (message != null ? message : "Failed to cancel reservation"),
+                        Toast.LENGTH_LONG).show();
+
+                btnCancelBooking.setEnabled(true);
 
                 if (success) {
                     if (onBookingSuccessListener != null) {
