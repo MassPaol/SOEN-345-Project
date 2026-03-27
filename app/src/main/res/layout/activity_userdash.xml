@@ -28,14 +28,16 @@
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
-            <com.google.android.material.button.MaterialButton
+            <ImageButton
                 android:id="@+id/btnLogout"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:text="Logout" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Logout"
+                android:padding="12dp"
+                android:src="@drawable/ic_logout" />
         </RelativeLayout>
 
         <com.google.android.material.card.MaterialCardView

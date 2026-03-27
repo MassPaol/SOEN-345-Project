@@ -72,6 +72,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         private final TextView tvEventCategory;
         private final TextView tvEventCapacity;
         private final TextView tvEventPrice;
+        private final TextView tvEventStatusPill;
         private final ImageButton btnEventMenu;
 
         public EventViewHolder(@NonNull View itemView) {
@@ -83,7 +84,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             tvEventCategory = itemView.findViewById(R.id.tvEventCategory);
             tvEventCapacity = itemView.findViewById(R.id.tvEventCapacity);
             tvEventPrice = itemView.findViewById(R.id.tvEventPrice);
+            tvEventStatusPill = itemView.findViewById(R.id.tvEventStatusPill);
             btnEventMenu = itemView.findViewById(R.id.btnEventMenu);
+            
+            // Admins don't need to see the status pill in the admin dashboard
+            if (tvEventStatusPill != null) {
+                tvEventStatusPill.setVisibility(View.GONE);
+            }
         }
 
         public void bind(Event event) {
