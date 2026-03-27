@@ -33,16 +33,20 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 5. Run all unit tests
-      - name: Run unit tests
+      # 5. Run all tests (Unit, Component, Acceptance)
+      - name: Run all tests (Unit, Component, Acceptance)
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      # 6. Upload test reports as a downloadable artifact
-      - name: Upload unit test results
+      # 6. Run ONLY System Acceptance Tests (for explicit visibility)
+      - name: Run System Acceptance Tests
+        run: ./gradlew testDebugUnitTest --tests "com.team_one.soen_345_project.acceptance.*" --stacktrace
+
+      # 7. Upload test reports as a downloadable artifact
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unit-test-results
+          name: all-test-results
           path: |
             app/build/reports/tests/testDebugUnitTest/
             app/build/test-results/testDebugUnitTest/

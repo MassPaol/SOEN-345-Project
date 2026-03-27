@@ -19,3 +19,25 @@ This is a university class project developed for SOEN 345 using Android Studio. 
 4. Once the Gradle sync is complete and successful, select a target deployment device from the device drop-down menu in the top toolbar. You can either use an **Android Virtual Device (Emulator)** (create one from the Device Manager if you haven't already) or connect a physical Android device via USB/Wi-Fi.
 5. Click the **Run 'app'** button (the green play icon) in the toolbar, or press `Shift + F10`.
 6. Android Studio will build the project and launch the application on your selected device or emulator.
+
+## How to Run Tests
+The project contains comprehensive test suites, including unit tests, component tests, and system acceptance tests.
+
+### Run All Local Tests (Unit & Acceptance)
+To run all tests (which do not require a device emulator), use the following Gradle command in your terminal:
+```bash
+./gradlew testDebugUnitTest
+```
+This will execute all testing domains (Login, Register, Dashboard ViewModels) along with the acceptance tests. You can view the test report at `app/build/reports/tests/testDebugUnitTest/index.html`.
+
+### Run ONLY the Acceptance Tests
+If you want to evaluate specifically the end-to-end functional and acceptance tests mapping to the project requirements:
+```bash
+./gradlew testDebugUnitTest --tests "com.team_one.soen_345_project.acceptance.*"
+```
+
+### Run UI / Instrumented Tests
+To run the Espresso UI layout and navigation tests (an Android Emulator or physical device MUST be running):
+```bash
+./gradlew connectedAndroidTest
+```
