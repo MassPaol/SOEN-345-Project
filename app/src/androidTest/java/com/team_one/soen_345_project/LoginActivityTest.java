@@ -50,8 +50,7 @@ public class LoginActivityTest {
 
         Thread.sleep(5000);
 
-        // 5. Verify that the Main Page is displayed
-        onView(withId(R.id.welcomeText)).check(matches(isDisplayed()));
-        onView(withText("MAIN PAGE")).check(matches(isDisplayed()));
+        // 5. Verify that the Dashboard is displayed
+        onView(withId(R.id.dashboardTitle)).check(matches(isDisplayed()));
     }
 }
