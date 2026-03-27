@@ -7,7 +7,7 @@ This is a university class project developed for SOEN 345 using Android Studio. 
 1. **Prerequisites**: Ensure you have [Android Studio](https://developer.android.com/studio) installed on your machine.
 2. **Clone the repository**:
    ```bash
-   git clone <repository_url>
+   git clone https://github.com/MassPaol/SOEN-345-Project.git
    cd SOEN-345-Project
    ```
 3. **Firebase Setup**: The project relies on Firebase services. Ensure that the `google-services.json` file is correctly placed in the `app/` directory (it is included in the project structure) to allow connection to the Firestore Database and Authentication services.
