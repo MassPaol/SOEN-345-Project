@@ -2,9 +2,12 @@ package com.team_one.soen_345_project.viewmodel.userdash;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.team_one.soen_345_project.model.repository.IEventRepository;
@@ -17,7 +20,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -36,12 +38,11 @@ public class UserDashViewModelCancelReservationTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
         viewModel = new UserDashViewModel(mockEventRepository, mockReservationRepository);
     }
 
     @Test
-    public void cancelBooking_success_reloadsEvents() {
+    public void cancelBooking_success_updatesUiStateWithoutReloadingAllEvents() {
         // Arrange
         String eventId = "event1";
         doAnswer(invocation -> {
@@ -55,9 +56,12 @@ public class UserDashViewModelCancelReservationTest {
 
         // Assert
         verify(mockReservationRepository).cancelEvent(eq(eventId), any());
-        // Since cancelling was successful, it invalidates cache and calls to reload booked events.
-        // Because cache is empty, it calls getAllEvents from the event repository.
-        verify(mockEventRepository).getAllEvents(any());
+        verify(mockEventRepository, never()).getAllEvents(any());
+
+        UserDashUiState state = viewModel.getUiState().getValue();
+        assertNotNull(state);
+        assertEquals("Cancelled", state.getMessage());
+        assertTrue(state.isActionComplete());
     }
 
     @Test
@@ -77,7 +81,10 @@ public class UserDashViewModelCancelReservationTest {
         verify(mockReservationRepository).cancelEvent(eq(eventId), any());
         
         UserDashUiState state = viewModel.getUiState().getValue();
-        assertEquals("Failed to cancel", state.getMessage());
+        assertNotNull(state);
+        String message = state != null ? state.getMessage() : null;
+        assertNotNull(message);
+        assertEquals("Failed to cancel", message);
         assertFalse(state.isActionComplete());
     }
 }
