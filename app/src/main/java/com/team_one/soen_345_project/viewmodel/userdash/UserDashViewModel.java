@@ -189,11 +189,18 @@ public class UserDashViewModel {
     }
 
     public void cancelBooking(String eventId) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            UserDashUiState current = _uiState.getValue();
+            _uiState.postValue(new UserDashUiState.Builder("Invalid event", false)
+                    .totalEventCount(current != null ? current.getTotalEventCount() : 0)
+                    .events(current != null ? current.getEvents() : new ArrayList<>())
+                    .build());
+            return;
+        }
+
         reservationRepository.cancelEvent(eventId, (message, success) -> {
             if (success) {
-                // Invalidate cache so the cancelled event drops from the booked list
-                allEvents.clear();
-                loadBookedUpcomingEvents();
+                postLocalCancellationState(eventId, message);
             } else {
                 UserDashUiState current = _uiState.getValue();
                 _uiState.postValue(new UserDashUiState.Builder(message, false)
@@ -202,5 +209,36 @@ public class UserDashViewModel {
                         .build());
             }
         });
+    }
+
+    public void onReservationCancelledLocally(String eventId) {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            return;
+        }
+        postLocalCancellationState(eventId, "Reservation cancelled successfully");
+    }
+
+    private void postLocalCancellationState(String eventId, String message) {
+        // Remove the cancelled reservation from both cache and currently displayed list.
+        if (allEvents != null) {
+            allEvents.removeIf(e -> e != null && eventId.equals(e.getEventId()));
+        }
+
+        UserDashUiState current = _uiState.getValue();
+        List<Event> currentEvents = current != null && current.getEvents() != null
+                ? new ArrayList<>(current.getEvents())
+                : new ArrayList<>();
+        currentEvents.removeIf(e -> e != null && eventId.equals(e.getEventId()));
+
+        int totalCount = allEvents != null && !allEvents.isEmpty()
+                ? allEvents.size()
+                : (current != null ? current.getTotalEventCount() : currentEvents.size());
+
+        _uiState.postValue(new UserDashUiState.Builder(
+                message != null ? message : "Reservation cancelled successfully",
+                true)
+                .totalEventCount(totalCount)
+                .events(currentEvents)
+                .build());
     }
 }

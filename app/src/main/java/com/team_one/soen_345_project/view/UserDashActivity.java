@@ -106,10 +106,7 @@ public class UserDashActivity extends AppCompatActivity {
                 }
                 return null;
             });
-            bottomSheet.setOnBookingSuccessListener(bookedEventId -> {
-                // Refresh booked events
-                userDashViewModel.loadBookedUpcomingEvents();
-            });
+            bottomSheet.setOnBookingSuccessListener(userDashViewModel::onReservationCancelledLocally);
             bottomSheet.show(getSupportFragmentManager(), "EventDetailsBottomSheetFragment");
         });
     }
