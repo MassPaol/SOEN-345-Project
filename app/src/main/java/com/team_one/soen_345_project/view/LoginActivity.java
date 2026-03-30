@@ -19,6 +19,7 @@ import com.team_one.soen_345_project.viewmodel.login.LoginViewModel;
  */
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
+    private static final String EXTRA_REGISTER_SUCCESS = "REGISTER_SUCCESS";
     private ActivityLoginBinding binding;
     private LoginViewModel viewModel;
     private ProgressBar loadingSpinner;
@@ -35,8 +36,17 @@ public class LoginActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
 
+        showRegistrationSuccessMessage();
         setupListeners();
         observeViewModel();
+    }
+
+    private void showRegistrationSuccessMessage() {
+        String message = getIntent().getStringExtra(EXTRA_REGISTER_SUCCESS);
+        if (message != null && !message.isEmpty()) {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            getIntent().removeExtra(EXTRA_REGISTER_SUCCESS);
+        }
     }
 
     private void setupListeners() {

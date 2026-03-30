@@ -28,7 +28,7 @@ public class LoginActivityTest {
             new ActivityScenarioRule<>(LoginActivity.class);
 
     @Test
-    public void loginFlow_navigatesToMainActivity() throws InterruptedException {
+        public void loginFlow_navigatesToDashboard() throws InterruptedException {
         // 1. Type valid email
         onView(withId(R.id.editTextEmail))
                 .perform(typeText("ammar.ranko707@gmail.com"), closeSoftKeyboard());

@@ -17,6 +17,7 @@ import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
     private static final String TAG = "RegisterActivity";
+    private static final String EXTRA_REGISTER_SUCCESS = "REGISTER_SUCCESS";
     private ActivityRegisterBinding binding;
 
     // ViewModel object for interaction with ViewModel layer
@@ -114,12 +115,13 @@ public class RegisterActivity extends AppCompatActivity {
      */
     private void setupObservers() {
 
-        // Watch for the signal that tells the app to navigate to the main screen
+        // Watch for the signal that tells the app to return to login after successful registration
         registerViewModel.getNavigateToMain().observe(this, navigateToMain -> {
             if (navigateToMain) {
-                Log.i(TAG, "Registration successful - navigating to MainActivity");
-                Intent intent = new Intent(this, MainActivity.class);
-                intent.putExtra("REGISTER_SUCCESS", "Account successfully created!");
+                Log.i(TAG, "Registration successful - navigating back to LoginActivity");
+                Intent intent = new Intent(this, LoginActivity.class);
+                intent.putExtra(EXTRA_REGISTER_SUCCESS, "Account successfully created!");
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 finish();
             }
