@@ -173,6 +173,14 @@ public class UserDashViewModel {
         });
     }
 
+    /**
+     * Forces a fresh events fetch before computing booked upcoming events.
+     * Use this when returning from other screens that may have changed booking state.
+     */
+    public void refreshBookedUpcomingEvents() {
+        loadAllEventsAndThenBooked();
+    }
+
     private void loadAllEventsAndThenBooked() {
         iEventRepository.getAllEvents(new EventListCallback() {
             @Override
@@ -219,10 +227,8 @@ public class UserDashViewModel {
     }
 
     private void postLocalCancellationState(String eventId, String message) {
-        // Remove the cancelled reservation from both cache and currently displayed list.
-        if (allEvents != null) {
-            allEvents.removeIf(e -> e != null && eventId.equals(e.getEventId()));
-        }
+        // Remove only from the currently displayed booked list.
+        // Keep allEvents cache intact because it represents all available events.
 
         UserDashUiState current = _uiState.getValue();
         List<Event> currentEvents = current != null && current.getEvents() != null
@@ -231,8 +237,8 @@ public class UserDashViewModel {
         currentEvents.removeIf(e -> e != null && eventId.equals(e.getEventId()));
 
         int totalCount = allEvents != null && !allEvents.isEmpty()
-                ? allEvents.size()
-                : (current != null ? current.getTotalEventCount() : currentEvents.size());
+            ? allEvents.size()
+            : (current != null ? current.getTotalEventCount() : currentEvents.size());
 
         _uiState.postValue(new UserDashUiState.Builder(
                 message != null ? message : "Reservation cancelled successfully",

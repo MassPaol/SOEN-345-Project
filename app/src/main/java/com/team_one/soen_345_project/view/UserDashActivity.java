@@ -47,7 +47,7 @@ public class UserDashActivity extends AppCompatActivity {
         setupObservers();
 
         // Load only the user's booked events for the Upcoming Events list
-        userDashViewModel.loadBookedUpcomingEvents();
+        userDashViewModel.refreshBookedUpcomingEvents();
 
         // ----- UI Listeners -----
 
@@ -106,7 +106,8 @@ public class UserDashActivity extends AppCompatActivity {
                 }
                 return null;
             });
-            bottomSheet.setOnBookingSuccessListener(userDashViewModel::onReservationCancelledLocally);
+            bottomSheet.setOnBookingSuccessListener(changedEventId ->
+                    userDashViewModel.refreshBookedUpcomingEvents());
             bottomSheet.show(getSupportFragmentManager(), "EventDetailsBottomSheetFragment");
         });
     }
@@ -147,8 +148,8 @@ public class UserDashActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh upcoming events when returning from booking flow
-        userDashViewModel.loadBookedUpcomingEvents();
+        // Force refresh from repository when returning from other screens (e.g., All Events booking)
+        userDashViewModel.refreshBookedUpcomingEvents();
     }
 
     @Override
