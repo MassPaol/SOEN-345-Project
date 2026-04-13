@@ -29,6 +29,10 @@ public class UserDashViewModel {
 
     // Cache of all events for filtering
     private List<Event> allEvents = new ArrayList<>();
+    // Source list currently used by search/filter in this screen.
+    private List<Event> visibleSourceEvents = new ArrayList<>();
+    // Cache of booked events shown in the user dashboard.
+    private List<Event> bookedEvents = new ArrayList<>();
 
     public LiveData<UserDashUiState> getUiState() {
         return _uiState;
@@ -61,10 +65,12 @@ public class UserDashViewModel {
             @Override
             public void onEventsReceived(List<Event> events) {
                 allEvents = new ArrayList<>(events);
+                visibleSourceEvents = new ArrayList<>(allEvents);
+                bookedEvents = new ArrayList<>();
                 int totalCount = events.size();
                 _uiState.postValue(new UserDashUiState.Builder(null, false)
                         .totalEventCount(totalCount)
-                        .events(events)
+                        .events(visibleSourceEvents)
                         .build());
             }
 
@@ -79,13 +85,16 @@ public class UserDashViewModel {
     public void searchEvents(String query) {
 
         List<Event> filteredEvents;
+        List<Event> sourceEvents = visibleSourceEvents != null
+                ? visibleSourceEvents
+                : new ArrayList<>();
 
         if (query == null || query.trim().isEmpty()) {
-            filteredEvents = new ArrayList<>(allEvents);
+            filteredEvents = new ArrayList<>(sourceEvents);
         } else {
             String lowerCaseQuery = query.toLowerCase().trim();
             filteredEvents = new ArrayList<>();
-            for (Event event : allEvents) {
+            for (Event event : sourceEvents) {
                 if (event.getTitle() != null &&
                         event.getTitle().toLowerCase().contains(lowerCaseQuery)) {
                     filteredEvents.add(event);
@@ -113,21 +122,28 @@ public class UserDashViewModel {
         _uiState.postValue(new UserDashUiState.Builder(message, isActionComplete)
                 .totalEventCount(allEvents.size())
                 .filterState(filterState)
-                .events(filterEvents(filterState))
+                .events(filterEvents(filterState, visibleSourceEvents))
                 .build());
     }
 
     // Filter all current events based on a given filter
     public List<Event> filterEvents(FilterState filterState) {
-        return allEvents.stream()
+        return filterEvents(filterState, allEvents);
+    }
+
+    private List<Event> filterEvents(FilterState filterState, List<Event> sourceEvents) {
+        FilterState safeFilter = filterState != null ? filterState : new FilterState();
+        List<Event> safeSource = sourceEvents != null ? sourceEvents : new ArrayList<>();
+
+        return safeSource.stream()
                 .filter(event ->
-                        (filterState.getCategory().equals(CategoryFilterOption.ALL) || event.getCategory_id().equalsIgnoreCase(filterState.getCategory().getId())) &&
-                        (filterState.getLocation().equals(LocationFilterOption.ALL)  || event.getLocation_id().equalsIgnoreCase(filterState.getLocation().getId())) &&
-                        (filterState.getDateFrom() == null || event.getDate().compareTo(filterState.getDateFrom()) >= 0) &&
-                        (filterState.getDateTo() == null || event.getDate().compareTo(filterState.getDateTo()) <= 0) &&
-                        (!filterState.isAvailableOnly() || !event.isFull()) &&
-                        (filterState.getMinPrice() == null || event.getPrice() >= filterState.getMinPrice()) &&
-                        (filterState.getMaxPrice() == null || event.getPrice() <= filterState.getMaxPrice())
+                        (safeFilter.getCategory().equals(CategoryFilterOption.ALL) || event.getCategory_id().equalsIgnoreCase(safeFilter.getCategory().getId())) &&
+                        (safeFilter.getLocation().equals(LocationFilterOption.ALL)  || event.getLocation_id().equalsIgnoreCase(safeFilter.getLocation().getId())) &&
+                        (safeFilter.getDateFrom() == null || event.getDate().compareTo(safeFilter.getDateFrom()) >= 0) &&
+                        (safeFilter.getDateTo() == null || event.getDate().compareTo(safeFilter.getDateTo()) <= 0) &&
+                        (!safeFilter.isAvailableOnly() || !event.isFull()) &&
+                        (safeFilter.getMinPrice() == null || event.getPrice() >= safeFilter.getMinPrice()) &&
+                        (safeFilter.getMaxPrice() == null || event.getPrice() <= safeFilter.getMaxPrice())
                 )
                 .collect(Collectors.toList());
     }
@@ -147,24 +163,29 @@ public class UserDashViewModel {
             @Override
             public void onResult(Set<String> bookedEventIds) {
                 Set<String> booked = bookedEventIds != null ? bookedEventIds : new HashSet<>();
-                List<Event> bookedEvents = allEvents.stream()
+                List<Event> matchedBookedEvents = allEvents.stream()
                         .filter(e -> e != null && e.getEventId() != null && booked.contains(e.getEventId()))
                         .collect(Collectors.toList());
 
                 // Sort chronologically
-                bookedEvents.sort((e1, e2) -> {
+                matchedBookedEvents.sort((e1, e2) -> {
                     if (e1.getDate() == null || e2.getDate() == null) return 0;
                     return e1.getDate().compareTo(e2.getDate());
                 });
 
+                bookedEvents = new ArrayList<>(matchedBookedEvents);
+                visibleSourceEvents = new ArrayList<>(bookedEvents);
+
                 _uiState.postValue(new UserDashUiState.Builder(null, false)
                         .totalEventCount(allEvents.size())
-                        .events(bookedEvents)
+                        .events(visibleSourceEvents)
                         .build());
             }
 
             @Override
             public void onError(String message) {
+                bookedEvents = new ArrayList<>();
+                visibleSourceEvents = new ArrayList<>();
                 _uiState.postValue(new UserDashUiState.Builder(message, false)
                         .totalEventCount(allEvents != null ? allEvents.size() : 0)
                         .events(new ArrayList<>())
@@ -186,6 +207,7 @@ public class UserDashViewModel {
             @Override
             public void onEventsReceived(List<Event> events) {
                 allEvents = new ArrayList<>(events);
+                visibleSourceEvents = new ArrayList<>(allEvents);
                 loadBookedUpcomingEvents();
             }
 
@@ -229,6 +251,9 @@ public class UserDashViewModel {
     private void postLocalCancellationState(String eventId, String message) {
         // Remove only from the currently displayed booked list.
         // Keep allEvents cache intact because it represents all available events.
+
+        bookedEvents.removeIf(e -> e != null && eventId.equals(e.getEventId()));
+        visibleSourceEvents.removeIf(e -> e != null && eventId.equals(e.getEventId()));
 
         UserDashUiState current = _uiState.getValue();
         List<Event> currentEvents = current != null && current.getEvents() != null

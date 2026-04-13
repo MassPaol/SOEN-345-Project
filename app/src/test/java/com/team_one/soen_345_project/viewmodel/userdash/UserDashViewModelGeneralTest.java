@@ -12,6 +12,8 @@ import com.team_one.soen_345_project.model.repository.IEventRepository;
 import com.team_one.soen_345_project.model.repository.IReservationRepository;
 import com.team_one.soen_345_project.model.util.callback.BookedEventsCallback;
 import com.team_one.soen_345_project.model.util.callback.EventListCallback;
+import com.team_one.soen_345_project.model.util.filter.CategoryFilterOption;
+import com.team_one.soen_345_project.model.util.filter.FilterState;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -20,7 +22,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -102,5 +103,66 @@ public class UserDashViewModelGeneralTest {
         boolean hasE1 = state.getEvents().stream().anyMatch(e -> e.getEventId().equals("e1"));
         boolean hasE3 = state.getEvents().stream().anyMatch(e -> e.getEventId().equals("e3"));
         assertTrue(hasE1 && hasE3);
+    }
+
+    @Test
+    public void testSearchEvents_afterBookedLoad_onlySearchesBookedEvents() {
+        Event e1 = new Event(); e1.setEventId("e1"); e1.setTitle("Alpha Booked");
+        Event e2 = new Event(); e2.setEventId("e2"); e2.setTitle("Alpha Unbooked");
+        Event e3 = new Event(); e3.setEventId("e3"); e3.setTitle("Beta Booked");
+
+        List<Event> mockEvents = Arrays.asList(e1, e2, e3);
+
+        doAnswer(invocation -> {
+            EventListCallback callback = invocation.getArgument(0);
+            callback.onEventsReceived(mockEvents);
+            return null;
+        }).when(mockEventRepository).getAllEvents(any(EventListCallback.class));
+
+        doAnswer(invocation -> {
+            BookedEventsCallback callback = invocation.getArgument(0);
+            callback.onResult(new HashSet<>(Arrays.asList("e1", "e3")));
+            return null;
+        }).when(mockReservationRepository).getBookedEventIdsForCurrentUser(any(BookedEventsCallback.class));
+
+        viewModel.loadBookedUpcomingEvents();
+        viewModel.searchEvents("Alpha");
+
+        UserDashUiState state = viewModel.getUiState().getValue();
+        assertNotNull(state);
+        assertEquals(1, state.getEvents().size());
+        assertEquals("e1", state.getEvents().get(0).getEventId());
+    }
+
+    @Test
+    public void testApplyFilter_afterBookedLoad_onlyFiltersBookedEvents() {
+        Event e1 = new Event(); e1.setEventId("e1"); e1.setTitle("Booked Tech"); e1.setCategory_id(CategoryFilterOption.TECH.getId());
+        Event e2 = new Event(); e2.setEventId("e2"); e2.setTitle("Unbooked Tech"); e2.setCategory_id(CategoryFilterOption.TECH.getId());
+        Event e3 = new Event(); e3.setEventId("e3"); e3.setTitle("Booked Sports"); e3.setCategory_id(CategoryFilterOption.SPORTS.getId());
+
+        List<Event> mockEvents = Arrays.asList(e1, e2, e3);
+
+        doAnswer(invocation -> {
+            EventListCallback callback = invocation.getArgument(0);
+            callback.onEventsReceived(mockEvents);
+            return null;
+        }).when(mockEventRepository).getAllEvents(any(EventListCallback.class));
+
+        doAnswer(invocation -> {
+            BookedEventsCallback callback = invocation.getArgument(0);
+            callback.onResult(new HashSet<>(Arrays.asList("e1", "e3")));
+            return null;
+        }).when(mockReservationRepository).getBookedEventIdsForCurrentUser(any(BookedEventsCallback.class));
+
+        viewModel.loadBookedUpcomingEvents();
+
+        FilterState filterState = new FilterState();
+        filterState.setCategory(CategoryFilterOption.TECH);
+        viewModel.applyFilter(filterState);
+
+        UserDashUiState state = viewModel.getUiState().getValue();
+        assertNotNull(state);
+        assertEquals(1, state.getEvents().size());
+        assertEquals("e1", state.getEvents().get(0).getEventId());
     }
 }
